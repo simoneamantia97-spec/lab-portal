@@ -177,8 +177,8 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
       <span class="nav-badge red" id="pending-count" style="display:none">0</span>
     </div>
     <div class="nav-item" id="mie-richieste-nav" data-section="mie-richieste" style="display:none">
-      <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10zm-8-7L4 6h16l-8 5z"/></svg>
-      <span>Le mie richieste</span>
+      <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+      <span>Notifiche</span>
       <span class="nav-badge red" id="user-notif-count" style="display:none">0</span>
     </div>
     <div class="nav-item disabled">
@@ -437,12 +437,13 @@ function renderDetail(key){
   // For non-admin: also show own pending/rejected requests for this day
   let extraHtml='';
   if(!isAdmin){
-    const myPending=Object.values(allRequests).filter(r=>r.date===key&&r.user===currentUser&&(r.status==='pending'||r.status==='rejected'));
+    const myPending=Object.entries(allRequests).filter(([,r])=>r.date===key&&r.user===currentUser&&(r.status==='pending'||r.status==='rejected'));
     if(myPending.length>0){
-      extraHtml=myPending.map(r=>{
+      extraHtml=myPending.map(([id,r])=>{
         const machine=getMachineByID(r.machine);
         const statusLabel=r.status==='pending'?'In attesa':'Rifiutata';
         const statusClass=r.status==='pending'?'status-pending':'status-rejected';
+        const cancelBtn=r.status==='pending'?`<button class="booking-del req-cancel" data-id="${id}" title="Annulla richiesta">&#10005;</button>`:'';
         return `<div class="booking-item">
           <div class="booking-color ${colorClass(machine.color)}" style="opacity:.5"></div>
           <div class="booking-info">
@@ -452,6 +453,7 @@ function renderDetail(key){
             ${r.note?`<div class="booking-note">${r.note}</div>`:''}
             <span class="status-badge ${statusClass}">${statusLabel}</span>
           </div>
+          ${cancelBtn}
         </div>`;
       }).join('');
     }
@@ -462,7 +464,8 @@ function renderDetail(key){
     const machine=getMachineByID(b.machine);
     const timeStr=`${b.timeStart} – ${b.timeEnd}`;
     const overlap=items.some((o,j)=>j!==i&&o.machine===b.machine&&o.timeStart<b.timeEnd&&o.timeEnd>b.timeStart);
-    const delBtn=isAdmin?`<button class="booking-del" data-key="${key}" data-idx="${i}" title="Elimina">&#10005;</button>`:'';
+    const canDel=isAdmin||(b.user===currentUser);
+    const delBtn=canDel?`<button class="booking-del" data-key="${key}" data-idx="${i}" title="Elimina">&#10005;</button>`:'';
     return `<div class="booking-item">
       <div class="booking-color ${colorClass(machine.color)}"></div>
       <div class="booking-info">
@@ -483,6 +486,15 @@ function renderDetail(key){
       if(bookings[k].length===0)delete bookings[k];
       await fbSet(`bookings/${viewYear}-${viewMonth}`,bookings);
       renderCal();renderDetail(k);updateStats();showToast('Prenotazione eliminata');
+    });
+  });
+  list.querySelectorAll('.req-cancel').forEach(btn=>{
+    btn.addEventListener('click',async()=>{
+      const id=btn.dataset.id;
+      await fbPatch(`requests/${id}`,{status:'cancelled'});
+      delete allRequests[id];
+      renderDetail(key);updateUserNotifBadge();
+      showToast('Richiesta annullata');
     });
   });
 }
@@ -579,7 +591,7 @@ function renderNotifications(){
 function renderMyRequests(){
   const list=document.getElementById('mie-richieste-list');
   const mine=Object.entries(allRequests)
-    .filter(([,r])=>r.user===currentUser)
+    .filter(([,r])=>r.user===currentUser&&r.status!=='cancelled'&&r.status!=='deleted')
     .sort((a,b)=>b[1].ts-a[1].ts);
   if(mine.length===0){
     list.innerHTML=`<div class="notif-empty">
@@ -610,7 +622,11 @@ function renderMyRequests(){
         <div class="notif-chip"><strong>Orario:</strong> ${r.timeStart} – ${r.timeEnd}</div>
       </div>
       ${r.note?`<div class="notif-note">"${r.note}"</div>`:''}
-      ${r.status==='approved'?`<div style="font-size:12px;color:#16a05a;padding:6px 10px;background:#e8faf2;border-radius:7px">✓ Prenotazione confermata — visibile nel calendario</div>`:''}
+      ${r.status==='approved'?`<div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+        <div style="font-size:12px;color:#16a05a;padding:6px 10px;background:#e8faf2;border-radius:7px">✓ Prenotazione confermata — visibile nel calendario</div>
+        <button class="btn btn-reject bk-delete-btn" style="font-size:11px;padding:4px 10px;margin-left:8px" data-id="${id}" data-date="${r.date}" data-user="${r.user}" data-machine="${r.machine}" data-start="${r.timeStart}" data-end="${r.timeEnd}">Elimina</button>
+      </div>`:''}
+      ${r.status==='pending'?`<div style="display:flex;justify-content:flex-end;margin-top:4px"><button class="btn btn-ghost req-cancel-notif" style="font-size:11px;padding:4px 10px" data-id="${id}">Annulla richiesta</button></div>`:''}
       ${r.status==='rejected'?`<div style="font-size:12px;color:var(--red);padding:6px 10px;background:#fff0f0;border-radius:7px">✕ Richiesta rifiutata dall'amministratore</div>`:''}
     </div>`;
   }).join('');
@@ -619,6 +635,36 @@ function renderMyRequests(){
   const seen=mine.map(([id])=>id);
   localStorage.setItem(seenKey,JSON.stringify(seen));
   updateUserNotifBadge();
+
+  // Delete approved booking
+  list.querySelectorAll('.bk-delete-btn').forEach(btn=>{
+    btn.addEventListener('click',async()=>{
+      const id=btn.dataset.id;const r=allRequests[id];
+      const d=new Date(r.date+'T12:00:00');
+      const ym=`${d.getFullYear()}-${d.getMonth()}`;
+      const bkData=await fbGet(`bookings/${ym}`)||{};
+      if(bkData[r.date]){
+        bkData[r.date]=bkData[r.date].filter(b=>!(b.user===r.user&&b.machine===r.machine&&b.timeStart===r.timeStart&&b.timeEnd===r.timeEnd));
+        if(bkData[r.date].length===0)delete bkData[r.date];
+        await fbSet(`bookings/${ym}`,bkData);
+      }
+      await fbPatch(`requests/${id}`,{status:'deleted'});
+      allRequests[id].status='deleted';
+      if(d.getFullYear()===viewYear&&d.getMonth()===viewMonth)await loadBookings();
+      renderMyRequests();showToast('Prenotazione eliminata');
+    });
+  });
+
+  // Cancel pending request
+  list.querySelectorAll('.req-cancel-notif').forEach(btn=>{
+    btn.addEventListener('click',async()=>{
+      const id=btn.dataset.id;
+      await fbPatch(`requests/${id}`,{status:'cancelled'});
+      allRequests[id].status='cancelled';
+      renderMyRequests();showToast('Richiesta annullata');
+    });
+  });
+
 }
 
 function updateUserNotifBadge(){
@@ -643,7 +689,7 @@ document.querySelectorAll('.nav-item[data-section]').forEach(item=>{
     item.classList.add('active');
     document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
     document.getElementById(`section-${sec}`).classList.add('active');
-    const titles={calendario:'Prenotazione Macchinari',notifiche:'Notifiche Prenotazioni','mie-richieste':'Le mie richieste'};
+    const titles={calendario:'Prenotazione Macchinari',notifiche:'Notifiche Prenotazioni','mie-richieste':'Notifiche'};
     document.getElementById('topbar-title').textContent=titles[sec]||sec;
     if(sec==='notifiche'){renderNotifications();document.getElementById('new-btn').style.display='none';}
     else if(sec==='mie-richieste'){renderMyRequests();document.getElementById('new-btn').style.display='none';}

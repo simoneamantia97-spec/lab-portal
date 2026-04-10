@@ -499,6 +499,7 @@ function renderDetail(key){
   list.querySelectorAll('.booking-del').forEach(btn=>{
     btn.addEventListener('click',async()=>{
       const k=btn.dataset.key;const idx=parseInt(btn.dataset.idx);
+      if(!bookings[k]){showToast('Errore: ricarica la pagina','error');return;}
       bookings[k].splice(idx,1);
       if(bookings[k].length===0)delete bookings[k];
       await fbSet(`bookings/${viewYear}-${viewMonth}`,bookings);
@@ -874,10 +875,12 @@ async function sendTelegramNotification(reqId,req){
     ]]}
   };
   try{
-    await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
+    const res=await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
       method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)
     });
-  }catch(e){console.error('Telegram error:',e);}
+    const json=await res.json();
+    if(!json.ok)console.error('Telegram API error:',json.description);
+  }catch(e){console.error('Telegram fetch error:',e);}
 }
 
 // URL ACTION HANDLER (approva/rifiuta da link Telegram)

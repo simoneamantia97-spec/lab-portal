@@ -185,6 +185,10 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
       <span>Notifiche</span>
       <span class="nav-badge red" id="user-notif-count" style="display:none">0</span>
     </div>
+    <div class="nav-item" id="segnala-nav" data-section="segnala" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+      <span>Segnala un problema</span>
+    </div>
     <div class="nav-item disabled">
       <svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>
       <span>Attrezzature</span>
@@ -251,6 +255,28 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
       </div>
     </div>
 
+    <!-- SEZIONE SEGNALA PROBLEMA (utenti) -->
+    <div class="section" id="section-segnala">
+      <div class="notif-section" style="max-width:600px">
+        <div class="panel-card" style="margin-bottom:0">
+          <h4 style="margin-bottom:18px">Segnala un problema</h4>
+          <div class="field">
+            <label>Macchinario</label>
+            <select id="segnala-machine">
+              <option value="">— Seleziona il macchinario —</option>
+            </select>
+          </div>
+          <div class="field" id="segnala-desc-field" style="display:none">
+            <label>Descrizione del problema</label>
+            <textarea id="segnala-desc" placeholder="Descrivi il problema riscontrato..." style="min-height:120px"></textarea>
+          </div>
+          <div id="segnala-actions" style="display:none">
+            <button class="btn btn-primary" id="segnala-submit" style="width:100%">Invia segnalazione</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- SEZIONE LE MIE RICHIESTE (utenti) -->
     <div class="section" id="section-mie-richieste">
       <div class="notif-section">
@@ -268,7 +294,12 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
     <!-- SEZIONE NOTIFICHE (admin) -->
     <div class="section" id="section-notifiche">
       <div class="notif-section">
+        <div style="display:flex;gap:10px;margin-bottom:18px">
+          <button class="btn btn-primary" id="tab-prenotazioni" style="flex:1">Prenotazioni <span id="tab-badge-pren" class="nav-badge" style="background:#1e3a5f;color:#4f8ef7;margin-left:6px;display:inline">0</span></button>
+          <button class="btn btn-ghost" id="tab-segnalazioni" style="flex:1">Segnalazioni <span id="tab-badge-segn" class="nav-badge red" style="margin-left:6px;display:inline">0</span></button>
+        </div>
         <div id="notif-list"></div>
+        <div id="issues-list" style="display:none"></div>
       </div>
     </div>
 
@@ -749,7 +780,127 @@ function updateUserNotifBadge(){
 }
 
 
-// GESTIONE UTENTI (admin)
+// SEGNALA PROBLEMA
+function populateSegnalaMachine(){
+  const sel=document.getElementById('segnala-machine');
+  if(!sel)return;
+  sel.innerHTML='<option value="">— Seleziona il macchinario —</option>'+
+    MACHINE_GROUPS.map(g=>`<optgroup label="${g.label}">${g.machines.map(m=>`<option value="${m.id}">${m.name}</option>`).join('')}</optgroup>`).join('');
+}
+
+document.addEventListener('change',e=>{
+  if(e.target&&e.target.id==='segnala-machine'){
+    const hasVal=!!e.target.value;
+    document.getElementById('segnala-desc-field').style.display=hasVal?'block':'none';
+    document.getElementById('segnala-actions').style.display=hasVal?'block':'none';
+  }
+});
+
+document.addEventListener('click',async e=>{
+  if(!e.target||e.target.id!=='segnala-submit')return;
+  const machine=document.getElementById('segnala-machine').value;
+  const desc=document.getElementById('segnala-desc').value.trim();
+  if(!machine){showToast('Seleziona il macchinario');return;}
+  if(!desc){showToast('Inserisci la descrizione del problema');return;}
+  const issueId=`issue_${Date.now()}_${Math.random().toString(36).substr(2,6)}`;
+  const issue={machine,desc,user:currentUser,ts:Date.now(),status:'open'};
+  await fbPatch('issues',{[issueId]:issue});
+  // Telegram
+  const machineName=getMachineByID(machine).name;
+  const tsStr=new Date(issue.ts).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const tgText=`🔧 *Segnalazione problema*\n\n👤 Utente: *${currentUser}*\n🔩 Macchinario: *${machineName}*\n📝 Problema: _${desc}_\n🕐 ${tsStr}`;
+  await sendTelegramMessage(tgText);
+  // Reset form
+  document.getElementById('segnala-machine').value='';
+  document.getElementById('segnala-desc').value='';
+  document.getElementById('segnala-desc-field').style.display='none';
+  document.getElementById('segnala-actions').style.display='none';
+  showToast('Segnalazione inviata','success');
+  updateIssuesBadge();
+});
+
+async function sendTelegramMessage(text){
+  try{
+    const res=await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({chat_id:TG_CHAT,text,parse_mode:'Markdown'})
+    });
+    const json=await res.json();
+    if(!json.ok)console.error('Telegram error:',json.description);
+  }catch(e){console.error('Telegram fetch error:',e);}
+}
+
+let allIssues={};
+async function loadIssues(){
+  const data=await fbGet('issues');
+  allIssues=data||{};
+  updateIssuesBadge();
+}
+
+function updateIssuesBadge(){
+  const open=Object.values(allIssues).filter(i=>i.status==='open').length;
+  const badge=document.getElementById('tab-badge-segn');
+  if(badge){badge.textContent=open;badge.style.display=open>0?'inline':'none';}
+}
+
+function renderIssues(){
+  const list=document.getElementById('issues-list');
+  const open=Object.entries(allIssues).filter(([,i])=>i.status==='open').sort((a,b)=>a[1].ts-b[1].ts);
+  if(open.length===0){
+    list.innerHTML=`<div class="notif-empty">
+      <svg viewBox="0 0 24 24" style="width:48px;height:48px;fill:#dde2ef;margin-bottom:12px"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+      <div style="font-size:15px;font-weight:500;margin-bottom:4px">Nessuna segnalazione aperta</div>
+    </div>`;
+    return;
+  }
+  list.innerHTML=open.map(([id,issue])=>{
+    const machine=getMachineByID(issue.machine);
+    const tsStr=new Date(issue.ts).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    return `<div class="notif-card" style="border-left:4px solid var(--amber)">
+      <div class="notif-header">
+        <div>
+          <div class="notif-machine">🔧 ${machine.name}</div>
+          <div class="notif-meta">Segnalato da <strong>${issue.user}</strong> — ${tsStr}</div>
+        </div>
+        <span class="status-badge status-pending">Aperta</span>
+      </div>
+      <div class="notif-note" style="margin-bottom:12px">"${issue.desc}"</div>
+      <div class="notif-actions">
+        <button class="btn btn-approve close-issue-btn" data-id="${id}">✓ Segna come risolta</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('.close-issue-btn').forEach(btn=>{
+    btn.addEventListener('click',async()=>{
+      const id=btn.dataset.id;
+      allIssues[id].status='resolved';
+      await fbPatch(`issues/${id}`,{status:'resolved'});
+      updateIssuesBadge();renderIssues();
+      showToast('Segnalazione risolta','success');
+    });
+  });
+}
+
+// ADMIN NOTIFICHE TABS
+document.addEventListener('click',e=>{
+  if(e.target&&e.target.id==='tab-prenotazioni'){
+    document.getElementById('tab-prenotazioni').className='btn btn-primary';
+    document.getElementById('tab-segnalazioni').className='btn btn-ghost';
+    document.getElementById('notif-list').style.display='block';
+    document.getElementById('issues-list').style.display='none';
+    renderNotifications();
+  }
+  if(e.target&&e.target.id==='tab-segnalazioni'){
+    document.getElementById('tab-segnalazioni').className='btn btn-primary';
+    document.getElementById('tab-prenotazioni').className='btn btn-ghost';
+    document.getElementById('issues-list').style.display='block';
+    document.getElementById('notif-list').style.display='none';
+    renderIssues();
+  }
+});
+
+
 const ALL_USERS=[
   'Simone Amantia','Davide Campanella','Riccardo Puleo','Gaetano Pollara',
   'Salvatore Russo','Gianluca Buffa','Giuseppe Ingarao','Kirill Kalashnikov',
@@ -813,11 +964,12 @@ document.querySelectorAll('.nav-item[data-section]').forEach(item=>{
     item.classList.add('active');
     document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
     document.getElementById(`section-${sec}`).classList.add('active');
-    const titles={calendario:'Prenotazione Macchinari',notifiche:'Notifiche Prenotazioni','mie-richieste':'Notifiche',utenti:'Gestione Utenti'};
+    const titles={calendario:'Prenotazione Macchinari',notifiche:'Notifiche Prenotazioni','mie-richieste':'Notifiche',utenti:'Gestione Utenti',segnala:'Segnala un problema'};
     document.getElementById('topbar-title').textContent=titles[sec]||sec;
     if(sec==='notifiche'){renderNotifications();document.getElementById('new-btn').style.display='none';}
     else if(sec==='mie-richieste'){renderMyRequests();document.getElementById('new-btn').style.display='none';}
     else if(sec==='utenti'){renderUsers();document.getElementById('new-btn').style.display='none';}
+    else if(sec==='segnala'){document.getElementById('new-btn').style.display='none';}
     else{document.getElementById('new-btn').style.display='block';}
   });
 });
@@ -998,8 +1150,11 @@ function setUser(name,admin){
   document.getElementById('notif-nav').style.display=admin?'flex':'none';
   document.getElementById('users-nav').style.display=admin?'flex':'none';
   document.getElementById('mie-richieste-nav').style.display=admin?'none':'flex';
+  document.getElementById('segnala-nav').style.display=admin?'none':'flex';
+  populateSegnalaMachine();
   loadBookings();
   loadRequests();
+  if(admin)loadIssues();
 }
 
 document.getElementById('change-user-btn').addEventListener('click',()=>{
@@ -1010,6 +1165,7 @@ document.getElementById('change-user-btn').addEventListener('click',()=>{
   document.getElementById('notif-nav').style.display='none';
   document.getElementById('users-nav').style.display='none';
   document.getElementById('mie-richieste-nav').style.display='none';
+  document.getElementById('segnala-nav').style.display='none';
   showUserModal();
 });
 
@@ -1028,26 +1184,18 @@ async function sendTelegramNotification(reqId,req){
   const machine=getMachineByID(req.machine);
   const dateParts=req.date.split('-');
   const dateStr=`${parseInt(dateParts[2])} ${MONTHS_IT[parseInt(dateParts[1])-1]} ${dateParts[0]}`;
-  // Check conflicts: same machine, same day, already approved
   const ym=`${new Date(req.date+'T12:00:00').getFullYear()}-${new Date(req.date+'T12:00:00').getMonth()}`;
   const bkData=await fbGet(`bookings/${ym}`)||{};
   const dayBk=(bkData[req.date]||[]).filter(b=>b.machine===req.machine&&b.timeStart<req.timeEnd&&b.timeEnd>req.timeStart);
   let conflictText='';
-  if(dayBk.length>0){
-    conflictText='\n\n⚠️ *CONFLITTI RILEVATI* per la stessa macchina:\n'+dayBk.map(b=>`• ${b.user}: ${b.timeStart}–${b.timeEnd}`).join('\n');
-  }
+  if(dayBk.length>0){conflictText='\n\n⚠️ *CONFLITTI RILEVATI* per la stessa macchina:\n'+dayBk.map(b=>`• ${b.user}: ${b.timeStart}–${b.timeEnd}`).join('\n');}
   const noteText=req.note?`\n📝 Note: _${req.note}_`:'';
   const text=`🔔 *Nuova richiesta di prenotazione*\n\n👤 Utente: *${req.user}*\n🔧 Macchina: *${machine.name}*\n📅 Data: *${dateStr}*\n🕐 Orario: *${req.timeStart} – ${req.timeEnd}*${noteText}${conflictText}`;
   const approveUrl=`${PORTAL_URL}?action=approve&id=${reqId}`;
   const rejectUrl=`${PORTAL_URL}?action=reject&id=${reqId}`;
   const body={
-    chat_id:TG_CHAT,
-    text,
-    parse_mode:'Markdown',
-    reply_markup:{inline_keyboard:[[
-      {text:'✅ Approva',url:approveUrl},
-      {text:'❌ Rifiuta',url:rejectUrl}
-    ]]}
+    chat_id:TG_CHAT,text,parse_mode:'Markdown',
+    reply_markup:{inline_keyboard:[[{text:'✅ Approva',url:approveUrl},{text:'❌ Rifiuta',url:rejectUrl}]]}
   };
   try{
     const res=await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{

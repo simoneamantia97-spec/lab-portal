@@ -69,10 +69,17 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
 
 /* SECTIONS */
 .section{display:none;width:100%}
-.section.active{display:flex;gap:24px}
+.section.active{display:flex;gap:24px;flex-wrap:wrap}
 
 /* CALENDAR */
-.cal-panel{flex:1;min-width:0}
+.cal-panel{flex:1;min-width:0;transition:flex-basis .35s ease}
+.detail-panel{width:310px;flex-shrink:0;display:flex;flex-direction:column;gap:14px;
+  transition:width .35s ease, flex-basis .35s ease, transform .35s ease, opacity .35s ease}
+.detail-panel.dp-bottom{width:100%;flex-basis:100%;flex-direction:row;flex-wrap:wrap;gap:14px}
+.detail-panel.dp-bottom .panel-card{flex:1;min-width:240px}
+.detail-panel.dp-exit{opacity:0;transform:translateX(30px)}
+.detail-panel.dp-enter{opacity:0;transform:translateY(20px)}
+.detail-panel.dp-visible{opacity:1;transform:none}
 .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
 .cal-nav h3{font-size:18px;font-weight:600;color:var(--text-dark);font-family:'IBM Plex Mono',monospace}
 .cal-nav-btns{display:flex;gap:6px}
@@ -93,7 +100,6 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
 .m0{background:#4f8ef7}.m1{background:#3dd68c}.m2{background:#f0a030}.m3{background:#e05555}.m4{background:#a78bfa}.m5{background:#06b6d4}.m6{background:#f472b6}
 
 /* DETAIL PANEL */
-.detail-panel{width:310px;flex-shrink:0;display:flex;flex-direction:column;gap:14px}
 .panel-card{background:var(--bg-card);border:1px solid #e2e7f0;border-radius:12px;padding:18px}
 .panel-card h4{font-size:13px;font-weight:600;color:var(--text-gray);text-transform:uppercase;letter-spacing:.7px;margin-bottom:14px}
 .no-bookings{text-align:center;padding:20px 0;color:var(--text-gray);font-size:13px}
@@ -145,6 +151,22 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
 .field textarea{resize:vertical;min-height:72px}
 .modal-actions{display:flex;gap:10px;margin-top:22px}
 .modal-actions .btn{flex:1}
+
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.week-col{min-height:220px;background:var(--bg-card);border:1.5px solid #e8ecf5;border-radius:9px;overflow:hidden}
+.week-col.today-col{border-color:var(--accent)}
+.week-col-header{padding:7px 8px;text-align:center;border-bottom:1px solid #f0f3fa;font-size:11px;font-weight:600;color:var(--text-gray);cursor:pointer}
+.week-col.today-col .week-col-header{color:var(--accent)}
+.week-event{margin:4px 5px;padding:5px 7px;border-radius:6px;font-size:11px;font-weight:500;color:#fff;cursor:pointer;line-height:1.3}
+.week-event:hover{opacity:.85}
+.day-event{padding:8px 12px;border-radius:8px;color:#fff;font-size:13px;cursor:pointer;margin-bottom:8px}
+.day-event:hover{opacity:.85}
+.day-event-machine{font-weight:600}
+.day-event-user{font-size:12px;opacity:.9;margin-top:2px}
+.day-event-time{font-size:11px;font-family:'IBM Plex Mono',monospace;opacity:.85;margin-top:2px}
+.day-hour-row{display:flex;align-items:flex-start;min-height:48px;border-bottom:1px solid #f0f3fa}
+.day-hour-label{width:56px;flex-shrink:0;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text-gray);padding:6px 8px 0;text-align:right}
+.day-hour-events{flex:1;padding:4px 8px;display:flex;flex-direction:column;gap:3px}
 
 .toast{position:fixed;bottom:24px;right:24px;background:var(--text-dark);color:white;padding:12px 18px;border-radius:10px;font-size:13px;z-index:200;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none}
 .toast.show{opacity:1;transform:translateY(0)}
@@ -236,16 +258,27 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
       <div class="cal-panel">
         <div class="cal-nav">
           <h3 id="cal-title">—</h3>
-          <div class="cal-nav-btns">
-            <button class="icon-btn" id="prev-btn">&#8249;</button>
-            <button class="icon-btn" id="next-btn">&#8250;</button>
+          <div style="display:flex;gap:6px;align-items:center">
+            <div style="display:flex;border:1px solid #dde2ef;border-radius:7px;overflow:hidden;margin-right:4px">
+              <button class="view-btn active" data-view="mese" style="padding:5px 12px;font-size:12px;font-weight:500;background:#eef4ff;color:var(--accent);border:none;cursor:pointer;font-family:inherit">Mese</button>
+              <button class="view-btn" data-view="settimana" style="padding:5px 12px;font-size:12px;font-weight:500;background:transparent;color:var(--text-gray);border:none;cursor:pointer;font-family:inherit;border-left:1px solid #dde2ef">Settimana</button>
+              <button class="view-btn" data-view="giorno" style="padding:5px 12px;font-size:12px;font-weight:500;background:transparent;color:var(--text-gray);border:none;cursor:pointer;font-family:inherit;border-left:1px solid #dde2ef">Giorno</button>
+            </div>
+            <div class="cal-nav-btns">
+              <button class="icon-btn" id="prev-btn">&#8249;</button>
+              <button class="icon-btn" id="next-btn">&#8250;</button>
+            </div>
           </div>
         </div>
-        <div class="cal-grid" id="cal-grid">
-          <div class="cal-header">Lun</div><div class="cal-header">Mar</div><div class="cal-header">Mer</div>
-          <div class="cal-header">Gio</div><div class="cal-header">Ven</div><div class="cal-header">Sab</div>
-          <div class="cal-header">Dom</div>
+        <div id="cal-month-view">
+          <div class="cal-grid" id="cal-grid">
+            <div class="cal-header">Lun</div><div class="cal-header">Mar</div><div class="cal-header">Mer</div>
+            <div class="cal-header">Gio</div><div class="cal-header">Ven</div><div class="cal-header">Sab</div>
+            <div class="cal-header">Dom</div>
+          </div>
         </div>
+        <div id="cal-week-view" style="display:none"></div>
+        <div id="cal-day-view" style="display:none"></div>
       </div>
       <div class="detail-panel">
         <div class="panel-card">
@@ -477,6 +510,7 @@ const MACHINES=MACHINE_GROUPS.flatMap(g=>g.machines);
 const MONTHS_IT=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
 let viewYear=new Date().getFullYear();
+let calView='mese'; // 'mese' | 'settimana' | 'giorno'
 let viewMonth=new Date().getMonth();
 let selectedDate=null;
 let bookings={};   // approved bookings per current month
@@ -505,7 +539,7 @@ async function loadBookings(){
   const ym=`${viewYear}-${viewMonth}`;
   const data=await fbGet(`bookings/${ym}`);
   bookings=data||{};
-  renderCal();
+  renderCalView();
   if(selectedDate&&currentUser)renderDetail(selectedDate);
   updateStats();
 }
@@ -551,7 +585,7 @@ function renderCal(){
     if(dayBk.length>0)cell.classList.add('has-booking');
     const dots=dayBk.slice(0,5).map(b=>{const m=getMachineByID(b.machine);return `<div class="day-dot ${colorClass(m.color)}"></div>`;}).join('');
     cell.innerHTML=`<span class="day-num">${d}</span><div class="day-dots">${dots}</div>`;
-    cell.addEventListener('click',()=>{selectedDate=key;renderCal();renderDetail(key);});
+    cell.addEventListener('click',()=>{selectedDate=key;renderCalView();renderDetail(key);});
     grid.appendChild(cell);
   }
   const total=dow+daysInMonth;const rem=total%7===0?0:7-(total%7);
@@ -561,6 +595,147 @@ function renderCal(){
   }
   const monthTotal=Object.values(bookings).flat().length;
   document.getElementById('month-count').textContent=monthTotal;
+}
+
+// VIEW SWITCHING
+document.querySelectorAll('.view-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.view-btn').forEach(b=>{
+      b.style.background='transparent';b.style.color='var(--text-gray)';b.classList.remove('active');
+    });
+    btn.style.background='#eef4ff';btn.style.color='var(--accent)';btn.classList.add('active');
+    calView=btn.dataset.view;
+    renderCalView();
+  });
+});
+
+function renderCalView(){
+  const dp=document.querySelector('#section-calendario .detail-panel');
+  const toBottom=calView!=='mese';
+  const wasBottom=dp&&dp.classList.contains('dp-bottom');
+
+  // Show all views hidden
+  document.getElementById('cal-month-view').style.display=calView==='mese'?'block':'none';
+  document.getElementById('cal-week-view').style.display=calView==='settimana'?'block':'none';
+  document.getElementById('cal-day-view').style.display=calView==='giorno'?'block':'none';
+
+  if(dp){
+    if(toBottom!==wasBottom){
+      // Animate out
+      dp.classList.remove('dp-visible');
+      dp.classList.add(wasBottom?'dp-enter':'dp-exit');
+      setTimeout(()=>{
+        dp.classList.toggle('dp-bottom',toBottom);
+        dp.classList.remove('dp-exit','dp-enter');
+        dp.classList.add(toBottom?'dp-enter':'dp-exit');
+        requestAnimationFrame(()=>{
+          requestAnimationFrame(()=>{
+            dp.classList.remove('dp-exit','dp-enter');
+            dp.classList.add('dp-visible');
+          });
+        });
+      },180);
+    }else{
+      dp.classList.add('dp-visible');
+    }
+    dp.style.display='flex';
+  }
+
+  if(calView==='mese')renderCal();
+  else if(calView==='settimana')renderWeekView();
+  else renderDayView();
+}
+
+function getWeekStart(date){
+  const d=new Date(date);
+  const dow=d.getDay();
+  const diff=(dow===0)?-6:1-dow;
+  d.setDate(d.getDate()+diff);
+  return d;
+}
+
+function renderWeekView(){
+  const base=selectedDate?new Date(selectedDate+'T12:00:00'):new Date();
+  const ws=getWeekStart(base);
+  const days=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(ws);d.setDate(ws.getDate()+i);days.push(d);
+  }
+  const todayStr=today();
+  const dayNames=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+  document.getElementById('cal-title').textContent=
+    `${days[0].getDate()} ${MONTHS_IT[days[0].getMonth()].substring(0,3)} – ${days[6].getDate()} ${MONTHS_IT[days[6].getMonth()].substring(0,3)} ${days[6].getFullYear()}`;
+
+  const container=document.getElementById('cal-week-view');
+  container.style.overflowX='auto';
+  const inner=document.createElement('div');
+  inner.style.cssText='display:grid;grid-template-columns:repeat(7,minmax(130px,1fr));gap:6px;min-width:700px';
+  inner.innerHTML=days.map((d,i)=>{
+    const key=dateKey(d.getFullYear(),d.getMonth(),d.getDate());
+    const isToday=key===todayStr;
+    const dayBk=bookings[key]||[];
+    const eventsHtml=dayBk.map(b=>{
+      const m=getMachineByID(b.machine);
+      const bg=['#4f8ef7','#3dd68c','#f0a030','#e05555','#a78bfa','#06b6d4','#f472b6'][m.color%7];
+      return `<div class="week-event" style="background:${bg}" data-key="${key}">${m.name}<br><span style="font-size:10px;opacity:.85">${b.timeStart}–${b.timeEnd}</span></div>`;
+    }).join('');
+    return `<div class="week-col${isToday?' today-col':''}">
+      <div class="week-col-header" data-key="${key}">${dayNames[i]}<br><span style="font-size:13px;font-family:'IBM Plex Mono',monospace">${d.getDate()}</span></div>
+      ${eventsHtml||'<div style="padding:8px 6px;font-size:11px;color:#ccc;text-align:center">—</div>'}
+    </div>`;
+  }).join('');
+  container.innerHTML='';
+  container.appendChild(inner);
+
+  container.querySelectorAll('.week-col-header[data-key],.week-event[data-key]').forEach(el=>{
+    el.addEventListener('click',()=>{
+      selectedDate=el.dataset.key;
+      renderDetail(selectedDate);
+    });
+  });
+}
+
+function renderDayView(){
+  const key=selectedDate||today();
+  const d=new Date(key+'T12:00:00');
+  document.getElementById('cal-title').textContent=
+    `${d.getDate()} ${MONTHS_IT[d.getMonth()]} ${d.getFullYear()}`;
+
+  const dayBk=bookings[key]||[];
+  const container=document.getElementById('cal-day-view');
+  container.style.background='var(--bg-card)';
+  container.style.borderRadius='12px';
+  container.style.border='1px solid #e2e7f0';
+  container.style.overflow='auto';
+
+  if(dayBk.length===0){
+    container.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-gray);font-size:13px">Nessuna prenotazione per questo giorno</div>';
+    return;
+  }
+
+  // Build hourly rows 07-20
+  const hours=[];
+  for(let h=7;h<=20;h++)hours.push(h);
+  const rows=hours.map(h=>{
+    const hStr=String(h).padStart(2,'0')+':00';
+    const hEnd=String(h+1).padStart(2,'0')+':00';
+    const hBk=dayBk.filter(b=>b.timeStart<hEnd&&b.timeEnd>hStr);
+    const eventsHtml=hBk.map(b=>{
+      const m=getMachineByID(b.machine);
+      const bg=['#4f8ef7','#3dd68c','#f0a030','#e05555','#a78bfa','#06b6d4','#f472b6'][m.color%7];
+      return `<div class="day-event" style="background:${bg}">
+        <div class="day-event-machine">${m.name}</div>
+        <div class="day-event-user">${b.user}</div>
+        <div class="day-event-time">${b.timeStart} – ${b.timeEnd}</div>
+      </div>`;
+    }).join('');
+    return `<div class="day-hour-row">
+      <div class="day-hour-label">${hStr}</div>
+      <div class="day-hour-events">${eventsHtml}</div>
+    </div>`;
+  }).join('');
+  container.innerHTML=rows;
+  renderDetail(key);
 }
 
 function renderDetail(key){
@@ -1169,8 +1344,38 @@ document.getElementById('today-btn').addEventListener('click',()=>{
   const n=new Date();viewYear=n.getFullYear();viewMonth=n.getMonth();
   selectedDate=today();loadBookings();
 });
-document.getElementById('prev-btn').addEventListener('click',()=>{viewMonth--;if(viewMonth<0){viewMonth=11;viewYear--;}selectedDate=null;loadBookings();});
-document.getElementById('next-btn').addEventListener('click',()=>{viewMonth++;if(viewMonth>11){viewMonth=0;viewYear++;}selectedDate=null;loadBookings();});
+document.getElementById('prev-btn').addEventListener('click',()=>{
+  if(calView==='giorno'){
+    const d=new Date((selectedDate||today())+'T12:00:00');d.setDate(d.getDate()-1);
+    selectedDate=dateKey(d.getFullYear(),d.getMonth(),d.getDate());
+    if(d.getFullYear()!==viewYear||d.getMonth()!==viewMonth){viewYear=d.getFullYear();viewMonth=d.getMonth();loadBookings();return;}
+    renderDayView();
+  }else if(calView==='settimana'){
+    const base=selectedDate?new Date(selectedDate+'T12:00:00'):new Date();
+    base.setDate(base.getDate()-7);
+    selectedDate=dateKey(base.getFullYear(),base.getMonth(),base.getDate());
+    if(base.getFullYear()!==viewYear||base.getMonth()!==viewMonth){viewYear=base.getFullYear();viewMonth=base.getMonth();loadBookings();return;}
+    renderWeekView();
+  }else{
+    viewMonth--;if(viewMonth<0){viewMonth=11;viewYear--;}selectedDate=null;loadBookings();
+  }
+});
+document.getElementById('next-btn').addEventListener('click',()=>{
+  if(calView==='giorno'){
+    const d=new Date((selectedDate||today())+'T12:00:00');d.setDate(d.getDate()+1);
+    selectedDate=dateKey(d.getFullYear(),d.getMonth(),d.getDate());
+    if(d.getFullYear()!==viewYear||d.getMonth()!==viewMonth){viewYear=d.getFullYear();viewMonth=d.getMonth();loadBookings();return;}
+    renderDayView();
+  }else if(calView==='settimana'){
+    const base=selectedDate?new Date(selectedDate+'T12:00:00'):new Date();
+    base.setDate(base.getDate()+7);
+    selectedDate=dateKey(base.getFullYear(),base.getMonth(),base.getDate());
+    if(base.getFullYear()!==viewYear||base.getMonth()!==viewMonth){viewYear=base.getFullYear();viewMonth=base.getMonth();loadBookings();return;}
+    renderWeekView();
+  }else{
+    viewMonth++;if(viewMonth>11){viewMonth=0;viewYear++;}selectedDate=null;loadBookings();
+  }
+});
 
 // LOGIN
 async function sha256(str){
@@ -1444,6 +1649,9 @@ handleUrlAction();
 renderLegend();
 populateMachineSelect();
 selectedDate=today();
+// Init detail panel state
+const _dp=document.querySelector('#section-calendario .detail-panel');
+if(_dp)_dp.classList.add('dp-visible');
 loadPasswords().then(()=>loadDynamicUsers()).then(()=>showUserModal());
 setInterval(loadRequests,30000);
 </script>

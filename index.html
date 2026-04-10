@@ -703,38 +703,51 @@ function renderDayView(){
 
   const dayBk=bookings[key]||[];
   const container=document.getElementById('cal-day-view');
-  container.style.background='var(--bg-card)';
-  container.style.borderRadius='12px';
-  container.style.border='1px solid #e2e7f0';
-  container.style.overflow='auto';
+  container.style.cssText='background:var(--bg-card);border-radius:12px;border:1px solid #e2e7f0;overflow-y:auto;max-height:calc(100vh - 200px)';
 
-  if(dayBk.length===0){
-    container.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-gray);font-size:13px">Nessuna prenotazione per questo giorno</div>';
-    return;
+  const HOUR_START=7;
+  const HOUR_END=21;
+  const PX_PER_HOUR=64;
+  const totalHours=HOUR_END-HOUR_START;
+  const totalH=totalHours*PX_PER_HOUR;
+  const LABEL_W=56;
+
+  // Build hours grid
+  let hoursHtml='';
+  for(let h=HOUR_START;h<HOUR_END;h++){
+    const top=(h-HOUR_START)*PX_PER_HOUR;
+    hoursHtml+=`<div style="position:absolute;top:${top}px;left:0;width:${LABEL_W}px;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text-gray);padding-right:8px;text-align:right;line-height:1">${String(h).padStart(2,'0')}:00</div>`;
+    hoursHtml+=`<div style="position:absolute;top:${top}px;left:${LABEL_W}px;right:0;border-top:1px solid #f0f3fa"></div>`;
+    // Half-hour line
+    const top30=top+PX_PER_HOUR/2;
+    hoursHtml+=`<div style="position:absolute;top:${top30}px;left:${LABEL_W}px;right:0;border-top:1px dashed #f0f3fa"></div>`;
   }
 
-  // Build hourly rows 07-20
-  const hours=[];
-  for(let h=7;h<=20;h++)hours.push(h);
-  const rows=hours.map(h=>{
-    const hStr=String(h).padStart(2,'0')+':00';
-    const hEnd=String(h+1).padStart(2,'0')+':00';
-    const hBk=dayBk.filter(b=>b.timeStart<hEnd&&b.timeEnd>hStr);
-    const eventsHtml=hBk.map(b=>{
-      const m=getMachineByID(b.machine);
-      const bg=['#4f8ef7','#3dd68c','#f0a030','#e05555','#a78bfa','#06b6d4','#f472b6'][m.color%7];
-      return `<div class="day-event" style="background:${bg}">
-        <div class="day-event-machine">${m.name}</div>
-        <div class="day-event-user">${b.user}</div>
-        <div class="day-event-time">${b.timeStart} – ${b.timeEnd}</div>
-      </div>`;
-    }).join('');
-    return `<div class="day-hour-row">
-      <div class="day-hour-label">${hStr}</div>
-      <div class="day-hour-events">${eventsHtml}</div>
+  // Build events
+  const colors=['#4f8ef7','#3dd68c','#f0a030','#e05555','#a78bfa','#06b6d4','#f472b6'];
+  let eventsHtml='';
+  dayBk.forEach(b=>{
+    if(!b.timeStart||!b.timeEnd)return;
+    const [sh,sm]=b.timeStart.split(':').map(Number);
+    const [eh,em]=b.timeEnd.split(':').map(Number);
+    const startMins=(sh*60+sm)-(HOUR_START*60);
+    const endMins=(eh*60+em)-(HOUR_START*60);
+    if(endMins<=0||startMins>=totalHours*60)return;
+    const topPx=Math.max(0,startMins/60*PX_PER_HOUR);
+    const botPx=Math.min(totalH,endMins/60*PX_PER_HOUR);
+    const heightPx=Math.max(22,botPx-topPx);
+    const m=getMachineByID(b.machine);
+    const bg=colors[m.color%colors.length];
+    const showUser=heightPx>36;
+    eventsHtml+=`<div style="position:absolute;top:${topPx}px;left:${LABEL_W+6}px;right:6px;height:${heightPx}px;
+      background:${bg};border-radius:7px;padding:5px 8px;box-sizing:border-box;overflow:hidden;cursor:pointer;color:#fff">
+      <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name}</div>
+      ${showUser?`<div style="font-size:11px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.user}</div>`:''}
+      <div style="font-size:10px;opacity:.8;font-family:'IBM Plex Mono',monospace">${b.timeStart}–${b.timeEnd}</div>
     </div>`;
-  }).join('');
-  container.innerHTML=rows;
+  });
+
+  container.innerHTML=`<div style="position:relative;height:${totalH}px;padding:8px 0">${hoursHtml}${eventsHtml}</div>`;
   renderDetail(key);
 }
 

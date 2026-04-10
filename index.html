@@ -758,6 +758,7 @@ document.getElementById('modal-save').addEventListener('click',async()=>{
     allRequests[reqId]=req;
     updatePendingBadge();
     if(selectedDate===date)renderDetail(date);
+    sendTelegramNotification(reqId,req);
     showToast('Richiesta inviata — in attesa di approvazione');
   }
   document.getElementById('modal').style.display='none';
@@ -842,7 +843,86 @@ function showToast(msg,type=''){
   t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);
 }
 
-// INIT
+// TELEGRAM
+const TG_TOKEN='8657579171:AAHNE81TSBdhDBfLWpZPnCiNWnBHWAQFmVc';
+const TG_CHAT='232747333';
+const PORTAL_URL='https://simoneamantia97-spec.github.io/lab-portal';
+
+async function sendTelegramNotification(reqId,req){
+  const machine=getMachineByID(req.machine);
+  const dateParts=req.date.split('-');
+  const dateStr=`${parseInt(dateParts[2])} ${MONTHS_IT[parseInt(dateParts[1])-1]} ${dateParts[0]}`;
+  // Check conflicts: same machine, same day, already approved
+  const ym=`${new Date(req.date+'T12:00:00').getFullYear()}-${new Date(req.date+'T12:00:00').getMonth()}`;
+  const bkData=await fbGet(`bookings/${ym}`)||{};
+  const dayBk=(bkData[req.date]||[]).filter(b=>b.machine===req.machine&&b.timeStart<req.timeEnd&&b.timeEnd>req.timeStart);
+  let conflictText='';
+  if(dayBk.length>0){
+    conflictText='\n\n⚠️ *CONFLITTI RILEVATI* per la stessa macchina:\n'+dayBk.map(b=>`• ${b.user}: ${b.timeStart}–${b.timeEnd}`).join('\n');
+  }
+  const noteText=req.note?`\n📝 Note: _${req.note}_`:'';
+  const text=`🔔 *Nuova richiesta di prenotazione*\n\n👤 Utente: *${req.user}*\n🔧 Macchina: *${machine.name}*\n📅 Data: *${dateStr}*\n🕐 Orario: *${req.timeStart} – ${req.timeEnd}*${noteText}${conflictText}`;
+  const approveUrl=`${PORTAL_URL}?action=approve&id=${reqId}`;
+  const rejectUrl=`${PORTAL_URL}?action=reject&id=${reqId}`;
+  const body={
+    chat_id:TG_CHAT,
+    text,
+    parse_mode:'Markdown',
+    reply_markup:{inline_keyboard:[[
+      {text:'✅ Approva',url:approveUrl},
+      {text:'❌ Rifiuta',url:rejectUrl}
+    ]]}
+  };
+  try{
+    await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)
+    });
+  }catch(e){console.error('Telegram error:',e);}
+}
+
+// URL ACTION HANDLER (approva/rifiuta da link Telegram)
+async function handleUrlAction(){
+  const params=new URLSearchParams(window.location.search);
+  const action=params.get('action');
+  const id=params.get('id');
+  if(!action||!id)return;
+  // Clean URL
+  window.history.replaceState({},'',window.location.pathname);
+  // Show overlay
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(15,22,35,.7);display:flex;align-items:center;justify-content:center;z-index:300;backdrop-filter:blur(4px)';
+  const box=document.createElement('div');
+  box.style.cssText='background:white;border-radius:16px;padding:32px 40px;text-align:center;max-width:360px;width:90%';
+  box.innerHTML='<div style="font-size:32px;margin-bottom:12px">⏳</div><div style="font-size:16px;font-weight:600;color:#1a2234">Elaborazione in corso...</div>';
+  overlay.appendChild(box);document.body.appendChild(overlay);
+  try{
+    const req=await fbGet(`requests/${id}`);
+    if(!req){box.innerHTML='<div style="font-size:32px;margin-bottom:12px">⚠️</div><div style="font-size:15px;font-weight:600;color:#1a2234">Richiesta non trovata</div><div style="font-size:13px;color:#5a6580;margin-top:8px">Potrebbe essere già stata gestita</div>';setTimeout(()=>overlay.remove(),3000);return;}
+    if(req.status!=='pending'){
+      const already=req.status==='approved'?'già approvata':'già rifiutata';
+      box.innerHTML=`<div style="font-size:32px;margin-bottom:12px">ℹ️</div><div style="font-size:15px;font-weight:600;color:#1a2234">Richiesta ${already}</div>`;
+      setTimeout(()=>overlay.remove(),3000);return;
+    }
+    const machine=getMachineByID(req.machine);
+    const dateParts=req.date.split('-');
+    const dateStr=`${parseInt(dateParts[2])} ${MONTHS_IT[parseInt(dateParts[1])-1]} ${dateParts[0]}`;
+    if(action==='approve'){
+      const ym=`${new Date(req.date+'T12:00:00').getFullYear()}-${new Date(req.date+'T12:00:00').getMonth()}`;
+      const bkData=await fbGet(`bookings/${ym}`)||{};
+      if(!bkData[req.date])bkData[req.date]=[];
+      bkData[req.date].push({machine:req.machine,timeStart:req.timeStart,timeEnd:req.timeEnd,note:req.note,user:req.user,ts:Date.now()});
+      await fbSet(`bookings/${ym}`,bkData);
+      await fbPatch(`requests/${id}`,{status:'approved'});
+      box.innerHTML=`<div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:16px;font-weight:600;color:#16a05a">Prenotazione approvata</div><div style="font-size:13px;color:#5a6580;margin-top:8px">${req.user} — ${machine.name}<br>${dateStr}, ${req.timeStart}–${req.timeEnd}</div>`;
+    }else{
+      await fbPatch(`requests/${id}`,{status:'rejected'});
+      box.innerHTML=`<div style="font-size:40px;margin-bottom:12px">❌</div><div style="font-size:16px;font-weight:600;color:#e05555">Prenotazione rifiutata</div><div style="font-size:13px;color:#5a6580;margin-top:8px">${req.user} — ${machine.name}<br>${dateStr}</div>`;
+    }
+    box.innerHTML+=`<button onclick="this.closest('div[style]').remove()" style="margin-top:20px;padding:8px 24px;background:#4f8ef7;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer">Chiudi</button>`;
+  }catch(e){box.innerHTML='<div style="font-size:32px;margin-bottom:12px">⚠️</div><div style="font-size:15px;color:#e05555">Errore di connessione</div>';setTimeout(()=>overlay.remove(),3000);}
+}
+
+handleUrlAction();
 renderLegend();
 populateMachineSelect();
 selectedDate=today();

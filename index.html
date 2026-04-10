@@ -336,15 +336,26 @@ const FB='https://lab-tm-18995-default-rtdb.europe-west1.firebasedatabase.app';
 const ADMIN_USER='AMMINISTRATORE';
 const ADMIN_PASS='LAB-TM';
 
-const MACHINES=[
-  {id:'waam',name:'WAAM',color:0},
-  {id:'cold',name:'Cold Spray',color:1},
-  {id:'afsd',name:'AFSD',color:2},
-  {id:'laser',name:'Laser Cladding / DED',color:3},
-  {id:'cnct',name:'Tornitura CNC',color:4},
-  {id:'cncf',name:'Fresatura CNC',color:5},
-  {id:'micro',name:'Microscopia SEM/OM',color:6},
+const MACHINE_GROUPS=[
+  {
+    label:'Parco Macchine',
+    machines:[
+      {id:'esab',name:'ESAB',color:0},
+      {id:'galdabini',name:'Galdabini',color:1},
+      {id:'pressa',name:'Pressa meccanica industriale',color:2},
+    ]
+  },
+  {
+    label:'Laboratorio Metallografico',
+    machines:[
+      {id:'polishing',name:'Polishing automatico',color:3},
+      {id:'sem',name:'SEM',color:4},
+      {id:'om',name:'Optical Microscope',color:5},
+      {id:'hardness',name:'Hardness machine',color:6},
+    ]
+  }
 ];
+const MACHINES=MACHINE_GROUPS.flatMap(g=>g.machines);
 const MONTHS_IT=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
 let viewYear=new Date().getFullYear();
@@ -517,12 +528,21 @@ function updateStats(){
 }
 
 function renderLegend(){
-  document.getElementById('legend').innerHTML=MACHINES.map(m=>`
-    <div class="legend-item"><div class="legend-dot ${colorClass(m.color)}"></div>${m.name}</div>`).join('');
+  document.getElementById('legend').innerHTML=MACHINE_GROUPS.map(g=>`
+    <details open style="margin-bottom:8px">
+      <summary style="font-size:11px;font-weight:600;color:var(--text-gray);text-transform:uppercase;letter-spacing:.6px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;padding:4px 0">
+        <span style="font-size:10px">&#9660;</span>${g.label}
+      </summary>
+      <div style="margin-top:6px;padding-left:4px">
+        ${g.machines.map(m=>`<div class="legend-item"><div class="legend-dot ${colorClass(m.color)}"></div>${m.name}</div>`).join('')}
+      </div>
+    </details>`).join('');
 }
 
 function populateMachineSelect(){
-  document.getElementById('f-machine').innerHTML=MACHINES.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+  document.getElementById('f-machine').innerHTML=MACHINE_GROUPS.map(g=>
+    `<optgroup label="${g.label}">${g.machines.map(m=>`<option value="${m.id}">${m.name}</option>`).join('')}</optgroup>`
+  ).join('');
 }
 
 // NOTIFICATIONS (admin)

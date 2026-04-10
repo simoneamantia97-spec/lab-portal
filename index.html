@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab Portal — UniPA</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --sidebar-w:220px;
+    --sidebar-bg:#0f1623;
+    --sidebar-hover:#1a2234;
+    --sidebar-active:#1e2a40;
+    --accent:#4f8ef7;
+    --accent2:#3dd68c;
+    --text-main:#f0f4ff;
+    --text-muted:#7a8aaa;
+    --border:#252f45;
+    --bg-main:#f5f7fc;
+    --bg-card:#ffffff;
+    --text-dark:#1a2234;
+    --text-gray:#5a6580;
+    --red:#e05555;
+    --amber:#f0a030;
+  }
+  body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:hidden;background:var(--bg-main)}
+
+  /* SIDEBAR */
+  .sidebar{width:var(--sidebar-w);background:var(--sidebar-bg);display:flex;flex-direction:column;flex-shrink:0;border-right:1px solid var(--border)}
+  .sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid var(--border)}
+  .sidebar-logo .logo-badge{width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+  .sidebar-logo .logo-badge svg{width:18px;height:18px;fill:white}
+  .sidebar-logo h1{color:var(--text-main);font-size:13px;font-weight:600;letter-spacing:0.5px;line-height:1.4}
+  .sidebar-logo p{color:var(--text-muted);font-size:11px;margin-top:2px}
+  .sidebar-nav{flex:1;padding:12px 0}
+  .nav-section{padding:16px 20px 6px;font-size:10px;font-weight:600;color:var(--text-muted);letter-spacing:1.2px;text-transform:uppercase}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;color:var(--text-muted);font-size:13px;font-weight:400;transition:all .15s;border-left:2px solid transparent;text-decoration:none}
+  .nav-item:hover{background:var(--sidebar-hover);color:var(--text-main)}
+  .nav-item.active{background:var(--sidebar-active);color:var(--text-main);border-left-color:var(--accent)}
+  .nav-item.disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
+  .nav-item svg{width:16px;height:16px;flex-shrink:0;fill:currentColor}
+  .nav-badge{margin-left:auto;background:#1e3a5f;color:#4f8ef7;font-size:10px;font-family:'IBM Plex Mono',monospace;padding:2px 7px;border-radius:4px}
+  .sidebar-footer{padding:16px 20px;border-top:1px solid var(--border)}
+  .sidebar-footer p{color:var(--text-muted);font-size:11px}
+  .sidebar-footer span{color:var(--accent);font-family:'IBM Plex Mono',monospace}
+
+  /* MAIN */
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .topbar{background:var(--bg-card);border-bottom:1px solid #e2e7f0;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+  .topbar h2{font-size:17px;font-weight:600;color:var(--text-dark)}
+  .topbar p{font-size:13px;color:var(--text-gray);margin-top:1px}
+  .topbar-right{display:flex;align-items:center;gap:10px}
+  .btn{padding:8px 16px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:'IBM Plex Sans',sans-serif;transition:all .15s}
+  .btn-primary{background:var(--accent);color:white}
+  .btn-primary:hover{background:#3a7de8}
+  .btn-ghost{background:transparent;color:var(--text-gray);border:1px solid #dde2ef}
+  .btn-ghost:hover{background:#f0f3fa}
+
+  .content{flex:1;overflow:auto;padding:24px 28px;display:flex;gap:24px}
+
+  /* CALENDAR SECTION */
+  .cal-panel{flex:1;min-width:0}
+  .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .cal-nav h3{font-size:18px;font-weight:600;color:var(--text-dark);font-family:'IBM Plex Mono',monospace}
+  .cal-nav-btns{display:flex;gap:6px}
+  .icon-btn{width:32px;height:32px;border-radius:7px;background:transparent;border:1px solid #dde2ef;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-gray);font-size:14px;transition:all .15s}
+  .icon-btn:hover{background:#f0f3fa;color:var(--text-dark)}
+
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .cal-header{text-align:center;font-size:11px;font-weight:600;color:var(--text-gray);padding:6px 0;letter-spacing:.6px;text-transform:uppercase}
+  .cal-day{aspect-ratio:1.1;background:var(--bg-card);border:1.5px solid #e8ecf5;border-radius:9px;padding:7px;cursor:pointer;transition:all .15s;position:relative;display:flex;flex-direction:column}
+  .cal-day:hover{border-color:var(--accent);background:#f0f5ff}
+  .cal-day.today{border-color:var(--accent);background:#eef4ff}
+  .cal-day.selected{border-color:var(--accent);background:#e0ecff;box-shadow:0 0 0 3px rgba(79,142,247,.15)}
+  .cal-day.other-month{opacity:.35}
+  .cal-day.has-booking{background:#f0fdf7;border-color:#a8e6cc}
+  .cal-day.has-booking:hover{background:#e0f9ee}
+  .day-num{font-size:13px;font-weight:500;color:var(--text-dark);font-family:'IBM Plex Mono',monospace}
+  .cal-day.today .day-num{color:var(--accent);font-weight:600}
+  .day-dots{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+  .day-dot{width:5px;height:5px;border-radius:50%}
+  .cal-day.other-month .day-num{color:var(--text-gray)}
+
+  /* MACHINE COLORS */
+  .m0{background:#4f8ef7}.m1{background:#3dd68c}.m2{background:#f0a030}.m3{background:#e05555}.m4{background:#a78bfa}.m5{background:#06b6d4}.m6{background:#f472b6}
+
+  /* DETAIL PANEL */
+  .detail-panel{width:310px;flex-shrink:0;display:flex;flex-direction:column;gap:14px}
+  .panel-card{background:var(--bg-card);border:1px solid #e2e7f0;border-radius:12px;padding:18px}
+  .panel-card h4{font-size:13px;font-weight:600;color:var(--text-gray);text-transform:uppercase;letter-spacing:.7px;margin-bottom:14px}
+  .no-bookings{text-align:center;padding:20px 0;color:var(--text-gray);font-size:13px}
+  .booking-item{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #f0f3fa}
+  .booking-item:last-child{border-bottom:none;padding-bottom:0}
+  .booking-color{width:4px;border-radius:4px;flex-shrink:0;align-self:stretch;min-height:40px}
+  .booking-info{flex:1}
+  .booking-machine{font-size:13px;font-weight:500;color:var(--text-dark)}
+  .booking-user{font-size:12px;color:var(--text-gray);margin-top:1px}
+  .booking-time{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text-gray);margin-top:3px}
+  .booking-note{font-size:11px;color:var(--text-gray);margin-top:3px;font-style:italic}
+  .booking-del{background:none;border:none;cursor:pointer;color:#ccc;font-size:14px;padding:2px;border-radius:4px;transition:color .15s}
+  .booking-del:hover{color:var(--red)}
+
+  .legend-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-gray);margin-bottom:7px}
+  .legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+  .stat-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f3fa;font-size:13px}
+  .stat-row:last-child{border-bottom:none}
+  .stat-label{color:var(--text-gray)}
+  .stat-val{font-weight:600;color:var(--text-dark);font-family:'IBM Plex Mono',monospace}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(15,22,35,.55);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px)}
+  .modal{background:white;border-radius:16px;padding:28px;width:420px;max-width:calc(100vw - 40px);box-shadow:0 20px 60px rgba(0,0,0,.2)}
+  .modal h3{font-size:17px;font-weight:600;color:var(--text-dark);margin-bottom:6px}
+  .modal .modal-sub{font-size:13px;color:var(--text-gray);margin-bottom:22px}
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--text-gray);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+  .field input,.field select,.field textarea{width:100%;padding:9px 12px;border:1.5px solid #dde2ef;border-radius:8px;font-size:14px;font-family:'IBM Plex Sans',sans-serif;color:var(--text-dark);background:white;outline:none;transition:border .15s}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+  .field textarea{resize:vertical;min-height:72px}
+  .modal-actions{display:flex;gap:10px;margin-top:22px}
+  .modal-actions .btn{flex:1}
+  .btn-danger{background:#fff0f0;color:var(--red);border:1px solid #ffd0d0}
+  .btn-danger:hover{background:#ffe0e0}
+  /* USER BADGE */
+  .user-form{display:flex;align-items:center;gap:8px}
+  .user-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:600;flex-shrink:0}
+  #user-name-disp{font-size:13px;font-weight:500;color:var(--text-main)}
+  #change-user-btn{background:none;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;padding:0;font-family:'IBM Plex Sans',sans-serif;text-decoration:underline}
+  #change-user-btn:hover{color:var(--text-main)}
+
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--text-dark);color:white;padding:12px 18px;border-radius:10px;font-size:13px;z-index:200;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none}
+  .toast.show{opacity:1;transform:translateY(0)}
+
+  @media(max-width:900px){
+    .sidebar{width:56px}.sidebar-logo h1,.sidebar-logo p,.nav-item span,.nav-section,.sidebar-footer p,.nav-badge,.sidebar-logo .logo-badge{display:none}
+    .nav-item{padding:12px;justify-content:center}.sidebar-logo{padding:12px;display:flex;justify-content:center}
+    .detail-panel{width:260px}
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-badge">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+    </div>
+    <h1>Lab Portal</h1>
+    <p>DiCIAM — UniPA</p>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Gestione</div>
+    <a class="nav-item active" href="#">
+      <svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
+      <span>Calendario</span>
+      <span class="nav-badge" id="month-count">0</span>
+    </a>
+    <a class="nav-item disabled" href="#">
+      <svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>
+      <span>Attrezzature</span>
+    </a>
+    <a class="nav-item disabled" href="#">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+      <span>Statistiche</span>
+    </a>
+    <div class="nav-section">Impostazioni</div>
+    <a class="nav-item disabled" href="#">
+      <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      <span>Collaboratori</span>
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-form">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div>
+        <div id="user-name-disp">—</div>
+        <button id="change-user-btn">cambia</button>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h2>Prenotazione Macchinari</h2>
+      <p id="topbar-sub">Seleziona un giorno per visualizzare o aggiungere prenotazioni</p>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost" id="today-btn">Oggi</button>
+      <button class="btn btn-primary" id="new-btn">+ Prenota</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="cal-panel">
+      <div class="cal-nav">
+        <h3 id="cal-title">—</h3>
+        <div class="cal-nav-btns">
+          <button class="icon-btn" id="prev-btn">&#8249;</button>
+          <button class="icon-btn" id="next-btn">&#8250;</button>
+        </div>
+      </div>
+      <div class="cal-grid" id="cal-grid">
+        <div class="cal-header">Lun</div>
+        <div class="cal-header">Mar</div>
+        <div class="cal-header">Mer</div>
+        <div class="cal-header">Gio</div>
+        <div class="cal-header">Ven</div>
+        <div class="cal-header">Sab</div>
+        <div class="cal-header">Dom</div>
+      </div>
+    </div>
+    <div class="detail-panel">
+      <div class="panel-card">
+        <h4 id="detail-title">— Seleziona un giorno</h4>
+        <div id="detail-list"><div class="no-bookings">Nessun giorno selezionato</div></div>
+      </div>
+      <div class="panel-card">
+        <h4>Macchinari</h4>
+        <div id="legend"></div>
+      </div>
+      <div class="panel-card">
+        <h4>Questo mese</h4>
+        <div id="stats"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" style="display:none">
+  <div class="modal">
+    <h3 id="modal-title">Nuova Prenotazione</h3>
+    <p class="modal-sub" id="modal-sub">Compila i dettagli</p>
+    <div class="field">
+      <label>Macchinario</label>
+      <select id="f-machine"></select>
+    </div>
+    <div class="field">
+      <label>Data</label>
+      <input type="date" id="f-date">
+    </div>
+    <div class="field">
+      <label>Fascia oraria</label>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px">
+        <div>
+          <div style="font-size:11px;color:var(--text-gray);margin-bottom:4px">Inizio</div>
+          <input type="time" id="f-time-start" value="08:00">
+        </div>
+        <div style="color:var(--text-gray);font-size:18px;padding-top:18px">—</div>
+        <div>
+          <div style="font-size:11px;color:var(--text-gray);margin-bottom:4px">Fine</div>
+          <input type="time" id="f-time-end" value="18:00">
+        </div>
+      </div>
+      <div id="time-error" style="font-size:12px;color:var(--red);margin-top:6px;display:none">L'orario di fine deve essere successivo all'inizio</div>
+    </div>
+    <div class="field">
+      <label>Note (opzionale)</label>
+      <textarea id="f-note" placeholder="Descrizione attività, materiali, ecc."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="modal-cancel">Annulla</button>
+      <button class="btn btn-primary" id="modal-save">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- USER MODAL -->
+<div class="modal-overlay" id="user-modal" style="display:none">
+  <div class="modal">
+    <h3>Benvenuto nel Lab Portal</h3>
+    <p class="modal-sub">Inserisci il tuo nome per identificare le tue prenotazioni</p>
+    <div class="field">
+      <label>Il tuo nome</label>
+      <input type="text" id="f-username" placeholder="Es. Mario Rossi" maxlength="50">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="user-save" style="flex:1">Accedi</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const MACHINES=[
+  {id:'waam',name:'WAAM',color:0},
+  {id:'cold',name:'Cold Spray',color:1},
+  {id:'afsd',name:'AFSD',color:2},
+  {id:'laser',name:'Laser Cladding / DED',color:3},
+  {id:'cnct',name:'Tornitura CNC',color:4},
+  {id:'cncf',name:'Fresatura CNC',color:5},
+  {id:'micro',name:'Microscopia SEM/OM',color:6},
+];
+
+const MONTHS_IT=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+
+let viewYear=new Date().getFullYear();
+let viewMonth=new Date().getMonth();
+let selectedDate=null;
+let bookings={};
+let currentUser=localStorage.getItem('labportal_user')||null;
+
+const FB_URL='https://lab-tm-18995-default-rtdb.europe-west1.firebasedatabase.app';
+
+function dateKey(y,m,d){return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`}
+function today(){const n=new Date();return dateKey(n.getFullYear(),n.getMonth(),n.getDate())}
+function fbPath(ym){return `${FB_URL}/bookings/${ym}.json`}
+
+async function loadBookings(){
+  const ym=`${viewYear}-${viewMonth}`;
+  try{
+    const r=await fetch(fbPath(ym));
+    const data=await r.json();
+    bookings=data||{};
+  }catch{bookings={}}
+  renderCal();
+  if(selectedDate)renderDetail(selectedDate);
+  updateStats();
+}
+
+async function saveBookings(){
+  const ym=`${viewYear}-${viewMonth}`;
+  try{
+    await fetch(fbPath(ym),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(bookings)});
+  }catch(e){console.error('Firebase write error:',e);}
+}
+
+function getMachineByID(id){return MACHINES.find(m=>m.id===id)||MACHINES[0]}
+function colorClass(idx){return `m${idx%7}`}
+
+function renderCal(){
+  const grid=document.getElementById('cal-grid');
+  const headers=grid.querySelectorAll('.cal-header');
+  // remove day cells only
+  grid.querySelectorAll('.cal-day').forEach(e=>e.remove());
+
+  const first=new Date(viewYear,viewMonth,1);
+  let dow=first.getDay();
+  dow=(dow===0)?6:dow-1; // Monday first
+
+  document.getElementById('cal-title').textContent=`${MONTHS_IT[viewMonth]} ${viewYear}`;
+
+  const daysInMonth=new Date(viewYear,viewMonth+1,0).getDate();
+  const daysInPrev=new Date(viewYear,viewMonth,0).getDate();
+  const todayKey=today();
+
+  // Prev month padding
+  for(let i=0;i<dow;i++){
+    const d=daysInPrev-dow+1+i;
+    const cell=document.createElement('div');
+    cell.className='cal-day other-month';
+    cell.innerHTML=`<span class="day-num">${d}</span>`;
+    grid.appendChild(cell);
+  }
+
+  for(let d=1;d<=daysInMonth;d++){
+    const key=dateKey(viewYear,viewMonth,d);
+    const cell=document.createElement('div');
+    cell.className='cal-day';
+    if(key===todayKey)cell.classList.add('today');
+    if(key===selectedDate)cell.classList.add('selected');
+    const dayBookings=bookings[key]||[];
+    if(dayBookings.length>0)cell.classList.add('has-booking');
+    const dots=dayBookings.slice(0,5).map(b=>{
+      const m=getMachineByID(b.machine);
+      return `<div class="day-dot ${colorClass(m.color)}"></div>`;
+    }).join('');
+    cell.innerHTML=`<span class="day-num">${d}</span><div class="day-dots">${dots}</div>`;
+    cell.addEventListener('click',()=>{selectedDate=key;renderCal();renderDetail(key);});
+    grid.appendChild(cell);
+  }
+
+  // Total cells needed = multiple of 7
+  const total=dow+daysInMonth;
+  const remainder=total%7===0?0:7-(total%7);
+  for(let i=1;i<=remainder;i++){
+    const cell=document.createElement('div');
+    cell.className='cal-day other-month';
+    cell.innerHTML=`<span class="day-num">${i}</span>`;
+    grid.appendChild(cell);
+  }
+
+  // Month count badge
+  const monthTotal=Object.values(bookings).flat().length;
+  document.getElementById('month-count').textContent=monthTotal;
+}
+
+function renderDetail(key){
+  const parts=key.split('-');
+  const d=parseInt(parts[2]);
+  const m=parseInt(parts[1])-1;
+  const y=parseInt(parts[0]);
+  document.getElementById('detail-title').textContent=`${d} ${MONTHS_IT[m]} ${y}`;
+  document.getElementById('topbar-sub').textContent=`${d} ${MONTHS_IT[m]} ${y}`;
+
+  const list=document.getElementById('detail-list');
+  const items=bookings[key]||[];
+  if(items.length===0){list.innerHTML='<div class="no-bookings">Nessuna prenotazione</div>';return;}
+  list.innerHTML=items.map((b,i)=>{
+    const machine=getMachineByID(b.machine);
+    // Support both old slot format and new timeStart/timeEnd
+    let timeStr;
+    if(b.timeStart&&b.timeEnd){timeStr=`${b.timeStart} – ${b.timeEnd}`;}
+    else{const m={mattina:'08:00–13:00',pomeriggio:'13:00–18:00',giornata:'08:00–18:00'};timeStr=b.slot==='personalizzato'?b.customTime:(m[b.slot]||b.slot);}
+    // Overlap check
+    const overlap=b.timeStart&&items.some((o,j)=>j!==i&&o.timeStart&&o.machine===b.machine&&o.timeStart<b.timeEnd&&o.timeEnd>b.timeStart);
+    return `<div class="booking-item">
+      <div class="booking-color ${colorClass(machine.color)}"></div>
+      <div class="booking-info">
+        <div class="booking-machine">${machine.name}${overlap?` <span style="font-size:10px;background:#fff0f0;color:var(--red);padding:1px 6px;border-radius:4px;font-weight:600">SOVRAPPOSIZIONE</span>`:''}</div>
+        <div class="booking-user">${b.user}</div>
+        <div class="booking-time">${timeStr}</div>
+        ${b.note?`<div class="booking-note">${b.note}</div>`:''}
+      </div>
+      <button class="booking-del" data-key="${key}" data-idx="${i}" title="Elimina">&#10005;</button>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('.booking-del').forEach(btn=>{
+    btn.addEventListener('click',async()=>{
+      const k=btn.dataset.key;
+      const idx=parseInt(btn.dataset.idx);
+      bookings[k].splice(idx,1);
+      if(bookings[k].length===0)delete bookings[k];
+      await saveBookings();
+      renderCal();
+      renderDetail(k);
+      updateStats();
+      showToast('Prenotazione eliminata');
+    });
+  });
+}
+
+function updateStats(){
+  const allItems=Object.values(bookings).flat();
+  const countByMachine={};
+  MACHINES.forEach(m=>{countByMachine[m.id]=0});
+  allItems.forEach(b=>{if(b.machine in countByMachine)countByMachine[b.machine]++});
+  const stats=document.getElementById('stats');
+  const rows=MACHINES.filter(m=>countByMachine[m.id]>0).map(m=>
+    `<div class="stat-row"><span class="stat-label">${m.name}</span><span class="stat-val">${countByMachine[m.id]}</span></div>`
+  ).join('');
+  stats.innerHTML=rows||'<div style="font-size:12px;color:var(--text-gray);text-align:center;padding:8px 0">Nessuna prenotazione</div>';
+}
+
+function renderLegend(){
+  const leg=document.getElementById('legend');
+  leg.innerHTML=MACHINES.map(m=>`
+    <div class="legend-item">
+      <div class="legend-dot ${colorClass(m.color)}"></div>
+      ${m.name}
+    </div>`).join('');
+}
+
+function populateMachineSelect(){
+  const sel=document.getElementById('f-machine');
+  sel.innerHTML=MACHINES.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+}
+
+// MODAL
+function openModal(prefillDate){
+  document.getElementById('modal').style.display='flex';
+  document.getElementById('f-date').value=prefillDate||selectedDate||today();
+  document.getElementById('f-note').value='';
+  document.getElementById('f-time-start').value='08:00';
+  document.getElementById('f-time-end').value='18:00';
+  document.getElementById('time-error').style.display='none';
+  const d=document.getElementById('f-date').value.split('-');
+  if(d.length===3)document.getElementById('modal-sub').textContent=
+    `${parseInt(d[2])} ${MONTHS_IT[parseInt(d[1])-1]} ${d[0]}`;
+}
+
+document.getElementById('modal-cancel').addEventListener('click',()=>{document.getElementById('modal').style.display='none'});
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))document.getElementById('modal').style.display='none'});
+
+document.getElementById('modal-save').addEventListener('click',async()=>{
+  const machine=document.getElementById('f-machine').value;
+  const date=document.getElementById('f-date').value;
+  const timeStart=document.getElementById('f-time-start').value;
+  const timeEnd=document.getElementById('f-time-end').value;
+  const note=document.getElementById('f-note').value.trim();
+  if(!date){showToast('Seleziona una data');return;}
+  if(!timeStart||!timeEnd){showToast('Inserisci orario di inizio e fine');return;}
+  if(timeEnd<=timeStart){
+    document.getElementById('time-error').style.display='block';return;
+  }
+  document.getElementById('time-error').style.display='none';
+
+  // Check if date month differs from current view
+  const dp=date.split('-');
+  const bYear=parseInt(dp[0]),bMonth=parseInt(dp[1])-1;
+  if(bYear!==viewYear||bMonth!==viewMonth){
+    viewYear=bYear;viewMonth=bMonth;
+    await loadBookings();
+  }
+
+  if(!bookings[date])bookings[date]=[];
+  bookings[date].push({machine,timeStart,timeEnd,note,user:currentUser,ts:Date.now()});
+  await saveBookings();
+  selectedDate=date;
+  renderCal();
+  renderDetail(date);
+  updateStats();
+  document.getElementById('modal').style.display='none';
+  showToast('Prenotazione salvata!');
+});
+
+document.getElementById('new-btn').addEventListener('click',()=>{
+  if(!currentUser){showUserModal();return;}
+  openModal();
+});
+
+document.getElementById('today-btn').addEventListener('click',()=>{
+  const n=new Date();
+  viewYear=n.getFullYear();viewMonth=n.getMonth();
+  selectedDate=today();
+  loadBookings();
+});
+
+document.getElementById('prev-btn').addEventListener('click',()=>{
+  viewMonth--;if(viewMonth<0){viewMonth=11;viewYear--;}
+  selectedDate=null;loadBookings();
+});
+document.getElementById('next-btn').addEventListener('click',()=>{
+  viewMonth++;if(viewMonth>11){viewMonth=0;viewYear++;}
+  selectedDate=null;loadBookings();
+});
+
+// USER
+function showUserModal(){
+  document.getElementById('user-modal').style.display='flex';
+  document.getElementById('f-username').focus();
+}
+
+function setUser(name){
+  currentUser=name;
+  localStorage.setItem('labportal_user',name);
+  document.getElementById('user-avatar').textContent=name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  document.getElementById('user-name-disp').textContent=name;
+}
+
+document.getElementById('user-save').addEventListener('click',()=>{
+  const n=document.getElementById('f-username').value.trim();
+  if(!n){showToast('Inserisci il tuo nome');return;}
+  setUser(n);
+  document.getElementById('user-modal').style.display='none';
+});
+document.getElementById('f-username').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('user-save').click()});
+document.getElementById('change-user-btn').addEventListener('click',showUserModal);
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// INIT
+renderLegend();
+populateMachineSelect();
+if(currentUser)setUser(currentUser);
+else showUserModal();
+loadBookings();
+// Auto-select today
+selectedDate=today();
+</script>
+</body>
+</html>

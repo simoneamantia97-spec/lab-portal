@@ -309,8 +309,14 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
     <h3 id="login-title">Accedi al Lab Portal</h3>
     <p class="modal-sub" id="login-sub">Inserisci il tuo nome per identificare le prenotazioni</p>
     <div class="field">
-      <label>Nome utente</label>
-      <input type="text" id="f-username" placeholder="Es. Mario Rossi" maxlength="50" autocomplete="off">
+      <label>Seleziona utente</label>
+      <select id="f-username">
+        <option value="">— Seleziona il tuo nome —</option>
+        <option value="Simone Amantia">Simone Amantia</option>
+        <option value="Davide Campanella">Davide Campanella</option>
+        <option value="Riccardo Puleo">Riccardo Puleo</option>
+        <option value="AMMINISTRATORE">Amministratore</option>
+      </select>
     </div>
     <div class="field" id="pwd-field" style="display:none">
       <label>Password</label>
@@ -464,7 +470,7 @@ function renderDetail(key){
     const machine=getMachineByID(b.machine);
     const timeStr=`${b.timeStart} – ${b.timeEnd}`;
     const overlap=items.some((o,j)=>j!==i&&o.machine===b.machine&&o.timeStart<b.timeEnd&&o.timeEnd>b.timeStart);
-    const canDel=isAdmin||(b.user===currentUser);
+    const canDel=isAdmin||(b.user&&b.user.trim().toLowerCase()===currentUser.trim().toLowerCase());
     const delBtn=canDel?`<button class="booking-del" data-key="${key}" data-idx="${i}" title="Elimina">&#10005;</button>`:'';
     return `<div class="booking-item">
       <div class="booking-color ${colorClass(machine.color)}"></div>
@@ -767,7 +773,7 @@ function showUserModal(){
   document.getElementById('f-username').focus();
 }
 
-document.getElementById('f-username').addEventListener('input',()=>{
+document.getElementById('f-username').addEventListener('change',()=>{
   const val=document.getElementById('f-username').value.trim().toUpperCase();
   const isPwd=val===ADMIN_USER;
   document.getElementById('pwd-field').style.display=isPwd?'block':'none';
@@ -776,7 +782,7 @@ document.getElementById('f-username').addEventListener('input',()=>{
 
 document.getElementById('user-save').addEventListener('click',()=>{
   const name=document.getElementById('f-username').value.trim();
-  if(!name){showToast('Inserisci il tuo nome');return;}
+  if(!name){showToast('Seleziona il tuo nome');return;}
   if(name.toUpperCase()===ADMIN_USER){
     const pwd=document.getElementById('f-password').value;
     if(pwd!==ADMIN_PASS){document.getElementById('login-error').style.display='block';return;}

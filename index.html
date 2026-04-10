@@ -162,7 +162,7 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
       <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
     </div>
     <h1>Lab Portal</h1>
-    <p>DiCIAM — UniPA</p>
+    <p>UniPA</p>
   </div>
   <nav class="sidebar-nav">
     <div class="nav-section">Gestione</div>
@@ -193,7 +193,7 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
       <svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>
       <span>Attrezzature</span>
     </div>
-    <div class="nav-item disabled">
+    <div class="nav-item" id="stats-nav" data-section="statistiche">
       <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
       <span>Statistiche</span>
     </div>
@@ -204,6 +204,9 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
     </div>
   </nav>
   <div class="sidebar-footer">
+    <div style="text-align:center;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:12px">
+      <img src="data:image/jpeg;base64,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" alt="MTG Logo" style="width:64px;height:64px;border-radius:8px;object-fit:cover">
+    </div>
     <div style="display:flex;align-items:center;gap:8px">
       <div class="user-avatar" id="user-avatar">?</div>
       <div>
@@ -256,6 +259,19 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
         <div class="panel-card">
           <h4>Questo mese</h4>
           <div id="stats"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEZIONE STATISTICHE -->
+    <div class="section" id="section-statistiche">
+      <div style="flex:1;overflow-y:auto">
+        <div id="stats-pie-container" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;padding-bottom:24px"></div>
+        <div id="stats-bar-container" style="display:none;margin-top:8px">
+          <div class="panel-card">
+            <h4 style="margin-bottom:16px">Segnalazioni per utente</h4>
+            <canvas id="bar-chart" height="120"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -374,6 +390,7 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
         <option value="Maria Gloria Trapani">Maria Gloria Trapani</option>
         <option value="Manuela Caspio">Manuela Caspio</option>
         <option value="AMMINISTRATORE">Amministratore</option>
+        <option value="__nuovo__">— Nuovo utente —</option>
       </select>
     </div>
     <!-- Mostrato solo per admin -->
@@ -400,6 +417,28 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
         <input type="password" id="f-confirm-password" placeholder="Ripeti la password" autocomplete="off">
       </div>
     </div>
+    <!-- Mostrato per nuovo utente -->
+    <div id="new-user-fields" style="display:none">
+      <div style="background:#eef4ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;font-size:12px;color:#1e40af;margin-bottom:14px">
+        Registrazione nuovo utente
+      </div>
+      <div class="field">
+        <label>Nome</label>
+        <input type="text" id="f-new-nome" placeholder="Es. Mario" maxlength="50" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Cognome</label>
+        <input type="text" id="f-new-cognome" placeholder="Es. Rossi" maxlength="50" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Crea password</label>
+        <input type="password" id="f-new-reg-password" placeholder="Almeno 4 caratteri" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Conferma password</label>
+        <input type="password" id="f-new-reg-confirm" placeholder="Ripeti la password" autocomplete="off">
+      </div>
+    </div>
     <div id="login-error" style="font-size:12px;color:var(--red);margin-bottom:12px;display:none">Errore</div>
     <div class="modal-actions">
       <button class="btn btn-primary" id="user-save" style="flex:1">Continua</button>
@@ -409,6 +448,7 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
 const FB='https://lab-tm-18995-default-rtdb.europe-west1.firebasedatabase.app';
 const ADMIN_USER='AMMINISTRATORE';
@@ -787,7 +827,101 @@ function updateUserNotifBadge(){
 }
 
 
-// SEGNALA PROBLEMA
+// STATISTICHE
+const CHART_COLORS=['#4f8ef7','#3dd68c','#f0a030','#e05555','#a78bfa','#06b6d4','#f472b6','#facc15','#34d399','#f87171','#818cf8','#fb923c'];
+let pieChartInstances=[];
+let barChartInstance=null;
+
+async function renderStats(){
+  // Collect all bookings across all months from Firebase
+  const container=document.getElementById('stats-pie-container');
+  container.innerHTML='<div style="color:var(--text-gray);font-size:13px;padding:8px">Caricamento dati...</div>';
+
+  // Load all bookings keys
+  const allBk=await fbGet('bookings')||{};
+  // Flatten all bookings: [{machine, timeStart, timeEnd, user}, ...]
+  const allEntries=[];
+  Object.values(allBk).forEach(monthData=>{
+    Object.values(monthData).forEach(dayArr=>{
+      if(Array.isArray(dayArr))dayArr.forEach(b=>allEntries.push(b));
+    });
+  });
+
+  // Destroy old pie charts
+  pieChartInstances.forEach(c=>c.destroy());
+  pieChartInstances=[];
+  container.innerHTML='';
+
+  if(allEntries.length===0){
+    container.innerHTML='<div style="color:var(--text-gray);font-size:13px;padding:8px">Nessuna prenotazione approvata ancora</div>';
+  }else{
+    // Group by machine
+    MACHINES.forEach(machine=>{
+      const machineBk=allEntries.filter(b=>b.machine===machine.id);
+      if(machineBk.length===0)return;
+      // Compute minutes per user
+      const minPerUser={};
+      machineBk.forEach(b=>{
+        if(!b.timeStart||!b.timeEnd)return;
+        const [sh,sm]=b.timeStart.split(':').map(Number);
+        const [eh,em]=b.timeEnd.split(':').map(Number);
+        const mins=(eh*60+em)-(sh*60+sm);
+        if(mins>0)minPerUser[b.user]=(minPerUser[b.user]||0)+mins;
+      });
+      const users=Object.keys(minPerUser);
+      if(users.length===0)return;
+      const total=Object.values(minPerUser).reduce((a,b)=>a+b,0);
+      const card=document.createElement('div');
+      card.className='panel-card';
+      card.style.minWidth='0';
+      card.innerHTML=`<h4 style="margin-bottom:12px">${machine.name}</h4><canvas id="pie-${machine.id}" style="max-height:200px"></canvas>`;
+      container.appendChild(card);
+      const ctx=document.getElementById(`pie-${machine.id}`).getContext('2d');
+      const chart=new Chart(ctx,{
+        type:'pie',
+        data:{
+          labels:users.map(u=>`${u} (${Math.round(minPerUser[u]/total*100)}%)`),
+          datasets:[{data:users.map(u=>Math.round(minPerUser[u]/total*100)),backgroundColor:users.map((_,i)=>CHART_COLORS[i%CHART_COLORS.length]),borderWidth:2,borderColor:'#fff'}]
+        },
+        options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:8}}}}
+      });
+      pieChartInstances.push(chart);
+    });
+    if(container.innerHTML==='')container.innerHTML='<div style="color:var(--text-gray);font-size:13px;padding:8px">Nessun dato disponibile</div>';
+  }
+
+  // Bar chart: segnalazioni per utente (admin only)
+  const barContainer=document.getElementById('stats-bar-container');
+  if(isAdmin){
+    barContainer.style.display='block';
+    const issuesData=await fbGet('issues')||{};
+    const countPerUser={};
+    ALL_USERS.forEach(u=>{countPerUser[u]=0;});
+    Object.values(issuesData).filter(i=>i.status!=='deleted').forEach(i=>{
+      if(i.user&&countPerUser[i.user]!==undefined)countPerUser[i.user]++;
+    });
+    const labels=ALL_USERS.filter(u=>countPerUser[u]>0);
+    const data=labels.map(u=>countPerUser[u]);
+    if(barChartInstance)barChartInstance.destroy();
+    const ctx=document.getElementById('bar-chart').getContext('2d');
+    barChartInstance=new Chart(ctx,{
+      type:'bar',
+      data:{
+        labels,
+        datasets:[{label:'Segnalazioni',data,backgroundColor:'#4f8ef7',borderRadius:6,borderSkipped:false}]
+      },
+      options:{
+        responsive:true,
+        plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'#f0f3fa'}},x:{grid:{display:false}}}
+      }
+    });
+  }else{
+    barContainer.style.display='none';
+  }
+}
+
+
 function populateSegnalaMachine(){
   const sel=document.getElementById('segnala-machine');
   if(!sel)return;
@@ -965,13 +1099,14 @@ document.querySelectorAll('.nav-item[data-section]').forEach(item=>{
     item.classList.add('active');
     document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
     document.getElementById(`section-${sec}`).classList.add('active');
-    const titles={calendario:'Prenotazione Macchinari',notifiche:'Notifiche Prenotazioni','mie-richieste':'Notifiche',utenti:'Gestione Utenti',segnala:'Segnala un problema',segnalazioni:'Segnalazioni'};
+    const titles={calendario:'Prenotazione Macchinari',notifiche:'Notifiche Prenotazioni','mie-richieste':'Notifiche',utenti:'Gestione Utenti',segnala:'Segnala un problema',segnalazioni:'Segnalazioni',statistiche:'Statistiche'};
     document.getElementById('topbar-title').textContent=titles[sec]||sec;
     if(sec==='notifiche'){renderNotifications();document.getElementById('new-btn').style.display='none';}
     else if(sec==='segnalazioni'){renderIssues();document.getElementById('new-btn').style.display='none';}
     else if(sec==='mie-richieste'){renderMyRequests();document.getElementById('new-btn').style.display='none';}
     else if(sec==='utenti'){renderUsers();document.getElementById('new-btn').style.display='none';}
     else if(sec==='segnala'){document.getElementById('new-btn').style.display='none';}
+    else if(sec==='statistiche'){renderStats();document.getElementById('new-btn').style.display='none';}
     else{document.getElementById('new-btn').style.display='block';}
   });
 });
@@ -1044,6 +1179,19 @@ async function sha256(str){
 }
 
 let userPasswords={};
+async function loadDynamicUsers(){
+  const users=await fbGet('users')||{};
+  const sel=document.getElementById('f-username');
+  const adminOpt=sel.querySelector('option[value="AMMINISTRATORE"]');
+  Object.values(users).forEach(fullName=>{
+    if(sel.querySelector(`option[value="${fullName}"]`))return;
+    const opt=document.createElement('option');
+    opt.value=fullName;opt.textContent=fullName;
+    sel.insertBefore(opt,adminOpt);
+  });
+}
+
+
 async function loadPasswords(){
   userPasswords=await fbGet('passwords')||{};
 }
@@ -1063,10 +1211,15 @@ function showUserModal(){
   document.getElementById('admin-pwd-field').style.display='none';
   document.getElementById('user-pwd-field').style.display='none';
   document.getElementById('first-access-fields').style.display='none';
+  document.getElementById('new-user-fields').style.display='none';
   if(document.getElementById('f-password'))document.getElementById('f-password').value='';
   if(document.getElementById('f-admin-password'))document.getElementById('f-admin-password').value='';
   if(document.getElementById('f-new-password'))document.getElementById('f-new-password').value='';
   if(document.getElementById('f-confirm-password'))document.getElementById('f-confirm-password').value='';
+  if(document.getElementById('f-new-nome'))document.getElementById('f-new-nome').value='';
+  if(document.getElementById('f-new-cognome'))document.getElementById('f-new-cognome').value='';
+  if(document.getElementById('f-new-reg-password'))document.getElementById('f-new-reg-password').value='';
+  if(document.getElementById('f-new-reg-confirm'))document.getElementById('f-new-reg-confirm').value='';
   hideError();
 }
 
@@ -1076,14 +1229,20 @@ document.getElementById('f-username').addEventListener('change',async()=>{
   document.getElementById('admin-pwd-field').style.display='none';
   document.getElementById('user-pwd-field').style.display='none';
   document.getElementById('first-access-fields').style.display='none';
+  document.getElementById('new-user-fields').style.display='none';
   document.getElementById('user-save').textContent='Continua';
   if(!name)return;
+  if(name==='__nuovo__'){
+    document.getElementById('new-user-fields').style.display='block';
+    document.getElementById('login-sub').textContent='Inserisci i tuoi dati per registrarti';
+    document.getElementById('user-save').textContent='Registrati';
+    return;
+  }
   if(name.toUpperCase()===ADMIN_USER){
     document.getElementById('admin-pwd-field').style.display='block';
     document.getElementById('user-save').textContent='Accedi';
     return;
   }
-  // Check if user has a password set
   const pwKey=name.replace(/\s+/g,'_').toLowerCase();
   if(userPasswords[pwKey]){
     document.getElementById('user-pwd-field').style.display='block';
@@ -1099,6 +1258,35 @@ document.getElementById('f-username').addEventListener('change',async()=>{
 document.getElementById('user-save').addEventListener('click',async()=>{
   const name=document.getElementById('f-username').value.trim();
   if(!name){showError('Seleziona il tuo nome');return;}
+
+  // NUOVO UTENTE
+  if(name==='__nuovo__'){
+    const nome=document.getElementById('f-new-nome').value.trim();
+    const cognome=document.getElementById('f-new-cognome').value.trim();
+    const pwd=document.getElementById('f-new-reg-password').value;
+    const confirm=document.getElementById('f-new-reg-confirm').value;
+    if(!nome){showError('Inserisci il nome');return;}
+    if(!cognome){showError('Inserisci il cognome');return;}
+    if(pwd.length<4){showError('La password deve essere di almeno 4 caratteri');return;}
+    if(pwd!==confirm){showError('Le password non coincidono');return;}
+    const fullName=`${nome} ${cognome}`;
+    const pwKey=fullName.replace(/\s+/g,'_').toLowerCase();
+    if(userPasswords[pwKey]){showError('Questo utente esiste già');return;}
+    // Save user in Firebase: passwords + users list
+    const hash=await sha256(pwd);
+    await fbPatch('passwords',{[pwKey]:hash});
+    await fbPatch('users',{[pwKey]:fullName});
+    userPasswords[pwKey]=hash;
+    // Add to dropdown
+    const sel=document.getElementById('f-username');
+    const newOpt=document.createElement('option');
+    newOpt.value=fullName;newOpt.textContent=fullName;
+    sel.insertBefore(newOpt,sel.querySelector('option[value="AMMINISTRATORE"]'));
+    setUser(fullName,false);
+    document.getElementById('user-modal').style.display='none';
+    showToast(`Benvenuto, ${fullName}!`,'success');
+    return;
+  }
 
   // ADMIN
   if(name.toUpperCase()===ADMIN_USER){
@@ -1256,7 +1444,7 @@ handleUrlAction();
 renderLegend();
 populateMachineSelect();
 selectedDate=today();
-loadPasswords().then(()=>showUserModal());
+loadPasswords().then(()=>loadDynamicUsers()).then(()=>showUserModal());
 setInterval(loadRequests,30000);
 </script>
 </body>

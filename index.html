@@ -176,6 +176,10 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
       <span>Notifiche</span>
       <span class="nav-badge red" id="pending-count" style="display:none">0</span>
     </div>
+    <div class="nav-item" id="users-nav" data-section="utenti" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      <span>Gestione Utenti</span>
+    </div>
     <div class="nav-item" id="mie-richieste-nav" data-section="mie-richieste" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
       <span>Notifiche</span>
@@ -254,6 +258,13 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
       </div>
     </div>
 
+    <!-- SEZIONE GESTIONE UTENTI (admin) -->
+    <div class="section" id="section-utenti">
+      <div class="notif-section">
+        <div id="utenti-list"></div>
+      </div>
+    </div>
+
     <!-- SEZIONE NOTIFICHE (admin) -->
     <div class="section" id="section-notifiche">
       <div class="notif-section">
@@ -307,7 +318,7 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
 <div class="modal-overlay" id="user-modal" style="display:none">
   <div class="modal">
     <h3 id="login-title">Accedi al Lab Portal</h3>
-    <p class="modal-sub" id="login-sub">Inserisci il tuo nome per identificare le prenotazioni</p>
+    <p class="modal-sub" id="login-sub">Seleziona il tuo nome per continuare</p>
     <div class="field">
       <label>Seleziona utente</label>
       <select id="f-username">
@@ -327,13 +338,33 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
         <option value="AMMINISTRATORE">Amministratore</option>
       </select>
     </div>
-    <div class="field" id="pwd-field" style="display:none">
+    <!-- Mostrato solo per admin -->
+    <div class="field" id="admin-pwd-field" style="display:none">
+      <label>Password amministratore</label>
+      <input type="password" id="f-admin-password" placeholder="••••••••" autocomplete="off">
+    </div>
+    <!-- Mostrato per utenti con password già impostata -->
+    <div class="field" id="user-pwd-field" style="display:none">
       <label>Password</label>
       <input type="password" id="f-password" placeholder="••••••••" autocomplete="off">
     </div>
-    <div id="login-error" style="font-size:12px;color:var(--red);margin-bottom:12px;display:none">Password errata</div>
+    <!-- Mostrato per primo accesso utente -->
+    <div id="first-access-fields" style="display:none">
+      <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:14px">
+        È il tuo primo accesso — imposta una password personale
+      </div>
+      <div class="field">
+        <label>Crea password</label>
+        <input type="password" id="f-new-password" placeholder="Almeno 4 caratteri" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Conferma password</label>
+        <input type="password" id="f-confirm-password" placeholder="Ripeti la password" autocomplete="off">
+      </div>
+    </div>
+    <div id="login-error" style="font-size:12px;color:var(--red);margin-bottom:12px;display:none">Errore</div>
     <div class="modal-actions">
-      <button class="btn btn-primary" id="user-save" style="flex:1">Accedi</button>
+      <button class="btn btn-primary" id="user-save" style="flex:1">Continua</button>
     </div>
   </div>
 </div>
@@ -397,7 +428,7 @@ async function loadBookings(){
   const data=await fbGet(`bookings/${ym}`);
   bookings=data||{};
   renderCal();
-  if(selectedDate)renderDetail(selectedDate);
+  if(selectedDate&&currentUser)renderDetail(selectedDate);
   updateStats();
 }
 
@@ -413,6 +444,7 @@ async function loadRequests(){
 function updatePendingBadge(){
   const pending=Object.values(allRequests).filter(r=>r.status==='pending').length;
   const badge=document.getElementById('pending-count');
+  if(!badge)return;
   badge.textContent=pending;
   badge.style.display=pending>0?'block':'none';
 }
@@ -490,7 +522,7 @@ function renderDetail(key){
     const machine=getMachineByID(b.machine);
     const timeStr=`${b.timeStart} – ${b.timeEnd}`;
     const overlap=items.some((o,j)=>j!==i&&o.machine===b.machine&&o.timeStart<b.timeEnd&&o.timeEnd>b.timeStart);
-    const canDel=isAdmin||(b.user&&b.user.trim().toLowerCase()===currentUser.trim().toLowerCase());
+    const canDel=isAdmin||(currentUser&&b.user&&b.user.trim().toLowerCase()===currentUser.trim().toLowerCase());
     const delBtn=canDel?`<button class="booking-del" data-key="${key}" data-idx="${i}" title="Elimina">&#10005;</button>`:'';
     return `<div class="booking-item">
       <div class="booking-color ${colorClass(machine.color)}"></div>
@@ -711,8 +743,64 @@ function updateUserNotifBadge(){
   const unseen=Object.entries(allRequests)
     .filter(([id,r])=>r.user===currentUser&&(r.status==='approved'||r.status==='rejected')&&!seen.includes(id)).length;
   const badge=document.getElementById('user-notif-count');
+  if(!badge)return;
   badge.textContent=unseen;
   badge.style.display=unseen>0?'block':'none';
+}
+
+
+// GESTIONE UTENTI (admin)
+const ALL_USERS=[
+  'Simone Amantia','Davide Campanella','Riccardo Puleo','Gaetano Pollara',
+  'Salvatore Russo','Gianluca Buffa','Giuseppe Ingarao','Kirill Kalashnikov',
+  'Sajjad Emami','Sangam Sangral','Maria Gloria Trapani','Manuela Caspio'
+];
+
+function renderUsers(){
+  const list=document.getElementById('utenti-list');
+  const rows=ALL_USERS.map(name=>{
+    const pwKey=name.replace(/\s+/g,'_').toLowerCase();
+    const hasPassword=!!userPasswords[pwKey];
+    const initials=name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    return `<div class="notif-card" style="display:flex;align-items:center;gap:16px;padding:14px 18px">
+      <div style="width:40px;height:40px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:600;flex-shrink:0">${initials}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:500;color:var(--text-dark)">${name}</div>
+        <div style="font-size:12px;margin-top:2px">
+          ${hasPassword
+            ? `<span style="color:#16a05a">&#10003; Account attivo</span>`
+            : `<span style="color:var(--text-gray)">Nessun accesso ancora effettuato</span>`}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        ${hasPassword?`<button class="btn btn-reject reset-pwd-btn" style="font-size:11px;padding:5px 12px" data-key="${pwKey}" data-name="${name}">Reset password</button>`:''}
+        <button class="btn btn-reject del-user-btn" style="font-size:11px;padding:5px 12px;background:#fff0f0" data-key="${pwKey}" data-name="${name}">Elimina account</button>
+      </div>
+    </div>`;
+  }).join('');
+  list.innerHTML=rows;
+
+  list.querySelectorAll('.reset-pwd-btn').forEach(btn=>{
+    btn.addEventListener('click',async()=>{
+      const key=btn.dataset.key;const name=btn.dataset.name;
+      if(!confirm(`Resettare la password di ${name}? Al prossimo accesso dovrà impostarne una nuova.`))return;
+      await fbPatch('passwords',{[key]:null});
+      delete userPasswords[key];
+      renderUsers();
+      showToast(`Password di ${name} resettata`);
+    });
+  });
+
+  list.querySelectorAll('.del-user-btn').forEach(btn=>{
+    btn.addEventListener('click',async()=>{
+      const key=btn.dataset.key;const name=btn.dataset.name;
+      if(!confirm(`Eliminare l'account di ${name}? Questa operazione rimuove la password salvata.`))return;
+      await fbPatch('passwords',{[key]:null});
+      delete userPasswords[key];
+      renderUsers();
+      showToast(`Account di ${name} eliminato`);
+    });
+  });
 }
 
 
@@ -725,10 +813,11 @@ document.querySelectorAll('.nav-item[data-section]').forEach(item=>{
     item.classList.add('active');
     document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
     document.getElementById(`section-${sec}`).classList.add('active');
-    const titles={calendario:'Prenotazione Macchinari',notifiche:'Notifiche Prenotazioni','mie-richieste':'Notifiche'};
+    const titles={calendario:'Prenotazione Macchinari',notifiche:'Notifiche Prenotazioni','mie-richieste':'Notifiche',utenti:'Gestione Utenti'};
     document.getElementById('topbar-title').textContent=titles[sec]||sec;
     if(sec==='notifiche'){renderNotifications();document.getElementById('new-btn').style.display='none';}
     else if(sec==='mie-richieste'){renderMyRequests();document.getElementById('new-btn').style.display='none';}
+    else if(sec==='utenti'){renderUsers();document.getElementById('new-btn').style.display='none';}
     else{document.getElementById('new-btn').style.display='block';}
   });
 });
@@ -795,35 +884,109 @@ document.getElementById('prev-btn').addEventListener('click',()=>{viewMonth--;if
 document.getElementById('next-btn').addEventListener('click',()=>{viewMonth++;if(viewMonth>11){viewMonth=0;viewYear++;}selectedDate=null;loadBookings();});
 
 // LOGIN
-function showUserModal(){
-  document.getElementById('user-modal').style.display='flex';
-  document.getElementById('f-username').value='';
-  document.getElementById('f-password').value='';
-  document.getElementById('pwd-field').style.display='none';
-  document.getElementById('login-error').style.display='none';
-  document.getElementById('f-username').focus();
+async function sha256(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-document.getElementById('f-username').addEventListener('change',()=>{
-  const val=document.getElementById('f-username').value.trim().toUpperCase();
-  const isPwd=val===ADMIN_USER;
-  document.getElementById('pwd-field').style.display=isPwd?'block':'none';
-  document.getElementById('login-error').style.display='none';
+let userPasswords={};
+async function loadPasswords(){
+  userPasswords=await fbGet('passwords')||{};
+}
+
+function showError(msg){
+  const el=document.getElementById('login-error');
+  el.textContent=msg;el.style.display='block';
+}
+function hideError(){document.getElementById('login-error').style.display='none';}
+
+function showUserModal(){
+  document.getElementById('user-modal').style.display='flex';
+  document.getElementById('login-title').textContent='Accedi al Lab Portal';
+  document.getElementById('login-sub').textContent='Seleziona il tuo nome per continuare';
+  document.getElementById('user-save').textContent='Continua';
+  document.getElementById('f-username').value='';
+  document.getElementById('admin-pwd-field').style.display='none';
+  document.getElementById('user-pwd-field').style.display='none';
+  document.getElementById('first-access-fields').style.display='none';
+  if(document.getElementById('f-password'))document.getElementById('f-password').value='';
+  if(document.getElementById('f-admin-password'))document.getElementById('f-admin-password').value='';
+  if(document.getElementById('f-new-password'))document.getElementById('f-new-password').value='';
+  if(document.getElementById('f-confirm-password'))document.getElementById('f-confirm-password').value='';
+  hideError();
+}
+
+document.getElementById('f-username').addEventListener('change',async()=>{
+  const name=document.getElementById('f-username').value.trim();
+  hideError();
+  document.getElementById('admin-pwd-field').style.display='none';
+  document.getElementById('user-pwd-field').style.display='none';
+  document.getElementById('first-access-fields').style.display='none';
+  document.getElementById('user-save').textContent='Continua';
+  if(!name)return;
+  if(name.toUpperCase()===ADMIN_USER){
+    document.getElementById('admin-pwd-field').style.display='block';
+    document.getElementById('user-save').textContent='Accedi';
+    return;
+  }
+  // Check if user has a password set
+  const pwKey=name.replace(/\s+/g,'_').toLowerCase();
+  if(userPasswords[pwKey]){
+    document.getElementById('user-pwd-field').style.display='block';
+    document.getElementById('login-sub').textContent='Inserisci la tua password';
+    document.getElementById('user-save').textContent='Accedi';
+  }else{
+    document.getElementById('first-access-fields').style.display='block';
+    document.getElementById('login-sub').textContent='Primo accesso — imposta la tua password';
+    document.getElementById('user-save').textContent='Imposta password e accedi';
+  }
 });
 
-document.getElementById('user-save').addEventListener('click',()=>{
+document.getElementById('user-save').addEventListener('click',async()=>{
   const name=document.getElementById('f-username').value.trim();
-  if(!name){showToast('Seleziona il tuo nome');return;}
+  if(!name){showError('Seleziona il tuo nome');return;}
+
+  // ADMIN
   if(name.toUpperCase()===ADMIN_USER){
-    const pwd=document.getElementById('f-password').value;
-    if(pwd!==ADMIN_PASS){document.getElementById('login-error').style.display='block';return;}
+    const pwd=document.getElementById('f-admin-password').value;
+    if(pwd!==ADMIN_PASS){showError('Password errata');return;}
     setUser(ADMIN_USER,true);
-  }else{
-    setUser(name,false);
+    document.getElementById('user-modal').style.display='none';
+    return;
   }
+
+  const pwKey=name.replace(/\s+/g,'_').toLowerCase();
+
+  // EXISTING USER — login
+  if(userPasswords[pwKey]){
+    const pwd=document.getElementById('f-password').value;
+    if(!pwd){showError('Inserisci la password');return;}
+    const hash=await sha256(pwd);
+    if(hash!==userPasswords[pwKey]){showError('Password errata');return;}
+    setUser(name,false);
+    document.getElementById('user-modal').style.display='none';
+    return;
+  }
+
+  // FIRST ACCESS — set password
+  const newPwd=document.getElementById('f-new-password').value;
+  const confirmPwd=document.getElementById('f-confirm-password').value;
+  if(newPwd.length<4){showError('La password deve essere di almeno 4 caratteri');return;}
+  if(newPwd!==confirmPwd){showError('Le password non coincidono');return;}
+  const hash=await sha256(newPwd);
+  await fbPatch('passwords',{[pwKey]:hash});
+  userPasswords[pwKey]=hash;
+  setUser(name,false);
   document.getElementById('user-modal').style.display='none';
+  showToast('Password impostata — benvenuto!','success');
 });
-document.getElementById('f-password').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('user-save').click();});
+
+const _fadmin=document.getElementById('f-admin-password');
+const _fpwd=document.getElementById('f-password');
+const _fconf=document.getElementById('f-confirm-password');
+if(_fadmin)_fadmin.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('user-save').click();});
+if(_fpwd)_fpwd.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('user-save').click();});
+if(_fconf)_fconf.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('user-save').click();});
 
 function setUser(name,admin){
   currentUser=name;isAdmin=admin;
@@ -832,9 +995,11 @@ function setUser(name,admin){
   avatar.className='user-avatar'+(admin?' admin':'');
   document.getElementById('user-name-disp').textContent=admin?'Admin':name;
   document.getElementById('change-user-btn').textContent='esci';
-  // Show/hide admin elements
   document.getElementById('notif-nav').style.display=admin?'flex':'none';
+  document.getElementById('users-nav').style.display=admin?'flex':'none';
   document.getElementById('mie-richieste-nav').style.display=admin?'none':'flex';
+  loadBookings();
+  loadRequests();
 }
 
 document.getElementById('change-user-btn').addEventListener('click',()=>{
@@ -843,6 +1008,7 @@ document.getElementById('change-user-btn').addEventListener('click',()=>{
   document.getElementById('user-avatar').className='user-avatar';
   document.getElementById('user-name-disp').textContent='—';
   document.getElementById('notif-nav').style.display='none';
+  document.getElementById('users-nav').style.display='none';
   document.getElementById('mie-richieste-nav').style.display='none';
   showUserModal();
 });
@@ -938,10 +1104,7 @@ handleUrlAction();
 renderLegend();
 populateMachineSelect();
 selectedDate=today();
-showUserModal();
-loadBookings();
-// Poll requests ogni 30 secondi
-loadRequests();
+loadPasswords().then(()=>showUserModal());
 setInterval(loadRequests,30000);
 </script>
 </body>

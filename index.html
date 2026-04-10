@@ -845,28 +845,30 @@ function updateIssuesBadge(){
 
 function renderIssues(){
   const list=document.getElementById('issues-list');
-  const open=Object.entries(allIssues).filter(([,i])=>i.status==='open').sort((a,b)=>a[1].ts-b[1].ts);
-  if(open.length===0){
+  const entries=Object.entries(allIssues).filter(([,i])=>i.status==='open'||i.status==='resolved').sort((a,b)=>a[1].ts-b[1].ts);
+  if(entries.length===0){
     list.innerHTML=`<div class="notif-empty">
       <svg viewBox="0 0 24 24" style="width:48px;height:48px;fill:#dde2ef;margin-bottom:12px"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-      <div style="font-size:15px;font-weight:500;margin-bottom:4px">Nessuna segnalazione aperta</div>
+      <div style="font-size:15px;font-weight:500;margin-bottom:4px">Nessuna segnalazione</div>
     </div>`;
     return;
   }
-  list.innerHTML=open.map(([id,issue])=>{
+  list.innerHTML=entries.map(([id,issue])=>{
     const machine=getMachineByID(issue.machine);
     const tsStr=new Date(issue.ts).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-    return `<div class="notif-card" style="border-left:4px solid var(--amber)">
+    const isResolved=issue.status==='resolved';
+    return `<div class="notif-card" style="border-left:4px solid ${isResolved?'#a8e6cc':'var(--amber)'}">
       <div class="notif-header">
         <div>
           <div class="notif-machine">🔧 ${machine.name}</div>
           <div class="notif-meta">Segnalato da <strong>${issue.user}</strong> — ${tsStr}</div>
         </div>
-        <span class="status-badge status-pending">Aperta</span>
+        <span class="status-badge ${isResolved?'status-approved':'status-pending'}">${isResolved?'Risolta':'Aperta'}</span>
       </div>
       <div class="notif-note" style="margin-bottom:12px">"${issue.desc}"</div>
       <div class="notif-actions">
-        <button class="btn btn-approve close-issue-btn" data-id="${id}">✓ Segna come risolta</button>
+        ${!isResolved?`<button class="btn btn-approve close-issue-btn" data-id="${id}">✓ Segna come risolta</button>`:''}
+        <button class="btn btn-reject del-issue-btn" data-id="${id}" style="margin-left:auto">🗑 Elimina</button>
       </div>
     </div>`;
   }).join('');
@@ -878,6 +880,16 @@ function renderIssues(){
       await fbPatch(`issues/${id}`,{status:'resolved'});
       updateIssuesBadge();renderIssues();
       showToast('Segnalazione risolta','success');
+    });
+  });
+
+  list.querySelectorAll('.del-issue-btn').forEach(btn=>{
+    btn.addEventListener('click',async()=>{
+      const id=btn.dataset.id;
+      await fbPatch(`issues/${id}`,{status:'deleted'});
+      delete allIssues[id];
+      updateIssuesBadge();renderIssues();
+      showToast('Segnalazione eliminata');
     });
   });
 }

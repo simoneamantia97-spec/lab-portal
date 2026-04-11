@@ -191,6 +191,15 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
 .notif-collab-chip{font-size:11px;background:#eef4ff;color:#1e40af;padding:2px 8px;border-radius:4px;font-weight:500}
 .collab-invite-card{background:#f0f5ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:16px 18px;margin-bottom:12px}
 .collab-invite-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;background:#dbeafe;color:#1e40af;margin-bottom:8px}
+.rsvp-row{display:flex;gap:8px;margin-top:10px}
+.btn-rsvp-accept{background:#e8faf2;color:#16a05a;border:1px solid #a8e6c8;font-size:12px;padding:6px 16px;border-radius:7px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-weight:500;transition:all .15s}
+.btn-rsvp-accept:hover{background:#d0f5e5}
+.btn-rsvp-decline{background:#fff0f0;color:var(--red);border:1px solid #ffd0d0;font-size:12px;padding:6px 16px;border-radius:7px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-weight:500;transition:all .15s}
+.btn-rsvp-decline:hover{background:#ffe0e0}
+.rsvp-chip{font-size:11px;font-weight:600;padding:3px 9px;border-radius:4px;display:inline-block}
+.rsvp-pending{background:#fff7e0;color:#b07800}
+.rsvp-accepted{background:#e8faf2;color:#16a05a}
+.rsvp-declined{background:#fff0f0;color:var(--red)}
 
 /* LINEE GUIDA MACCHINE */
 .machine-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px;padding-bottom:8px}
@@ -611,12 +620,29 @@ async function loadBookings(){
 }
 
 async function loadRequests(){
+  const prevRequests={...allRequests};
   const data=await fbGet('requests');
   allRequests=data||{};
   if(currentUser&&!isAdmin){
     const userKey=currentUser.replace(/\s+/g,'_').toLowerCase();
     const cn=await fbGet(`collab_notifs/${userKey}`);
     allCollabNotifs=cn||{};
+    // Se una mia richiesta è passata da pending ad approved → ricarica calendario
+    const newlyApproved=Object.entries(allRequests).filter(([id,r])=>
+      r.user===currentUser&&r.status==='approved'&&
+      prevRequests[id]&&prevRequests[id].status==='pending'
+    );
+    if(newlyApproved.length>0){
+      await loadBookings();
+      showToast('Prenotazione approvata — calendario aggiornato','success');
+    }
+    // Se un collaboratore ha risposto → aggiorna il pannello dettaglio se visibile
+    const collabStatusChanged=Object.entries(allRequests).some(([id,r])=>{
+      if(!prevRequests[id]||!r.collabStatus)return false;
+      const prev=prevRequests[id].collabStatus||{};
+      return Object.entries(r.collabStatus).some(([k,v])=>prev[k]!==v);
+    });
+    if(collabStatusChanged&&selectedDate)renderDetail(selectedDate);
   }
   updatePendingBadge();
   updateUserNotifBadge();
@@ -868,6 +894,18 @@ function renderDetail(key){
         <div class="booking-user">${b.user}</div>
         <div class="booking-time">${timeStr}</div>
         ${b.note?`<div class="booking-note">${b.note}</div>`:''}
+        ${(()=>{
+          if(!b.collaborators||b.collaborators.length===0)return '';
+          const req=b.reqId?allRequests[b.reqId]:null;
+          const chips=b.collaborators.map(c=>{
+            const key=c.replace(/\s+/g,'_').toLowerCase();
+            const rsvp=(req&&req.collabStatus&&req.collabStatus[key])||'pending';
+            const rsvpLabel=rsvp==='accepted'?'✓':rsvp==='declined'?'✕':'⏳';
+            const rsvpCls=rsvp==='accepted'?'rsvp-accepted':rsvp==='declined'?'rsvp-declined':'rsvp-pending';
+            return `<span class="notif-collab-chip" style="display:inline-flex;align-items:center;gap:4px"><span class="rsvp-chip ${rsvpCls}" style="padding:1px 5px;font-size:9px">${rsvpLabel}</span>${c}</span>`;
+          }).join('');
+          return `<div class="notif-collabs" style="margin-top:4px">${chips}</div>`;
+        })()}
         <span class="status-badge status-approved">Approvata</span>
       </div>
       ${delBtn}
@@ -969,7 +1007,7 @@ function renderNotifications(){
       const ym=`${new Date(r.date+'T12:00:00').getFullYear()}-${new Date(r.date+'T12:00:00').getMonth()}`;
       const bkData=await fbGet(`bookings/${ym}`)||{};
       if(!bkData[r.date])bkData[r.date]=[];
-      bkData[r.date].push({machine:r.machine,timeStart:r.timeStart,timeEnd:r.timeEnd,note:r.note,user:r.user,collaborators:r.collaborators||[],ts:Date.now()});
+      bkData[r.date].push({machine:r.machine,timeStart:r.timeStart,timeEnd:r.timeEnd,note:r.note,user:r.user,collaborators:r.collaborators||[],reqId:id,ts:Date.now()});
       await fbSet(`bookings/${ym}`,bkData);
       // Update request status
       allRequests[id].status='approved';
@@ -1016,6 +1054,17 @@ function renderMyRequests(){
     const dateParts=n.date.split('-');
     const dateStr=`${parseInt(dateParts[2])} ${MONTHS_IT[parseInt(dateParts[1])-1]} ${dateParts[0]}`;
     const tsStr=new Date(n.ts).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const st=n.status||'pending';
+    const rsvpSection=st==='pending'
+      ?`<div class="rsvp-row">
+          <button class="btn-rsvp-accept collab-rsvp-btn" data-id="${id}" data-action="accepted">✓ Accetta</button>
+          <button class="btn-rsvp-decline collab-rsvp-btn" data-id="${id}" data-action="declined">✕ Rifiuta</button>
+        </div>`
+      :`<div style="margin-top:10px">
+          <span class="rsvp-chip ${st==='accepted'?'rsvp-accepted':'rsvp-declined'}">
+            ${st==='accepted'?'✓ Hai accettato':'✕ Hai rifiutato'}
+          </span>
+        </div>`;
     return `<div class="collab-invite-card">
       <div class="collab-invite-badge">Invito collaborazione</div>
       <div class="notif-header" style="margin-bottom:10px">
@@ -1030,9 +1079,7 @@ function renderMyRequests(){
         <div class="notif-chip"><strong>Orario:</strong> ${n.timeStart} – ${n.timeEnd}</div>
       </div>
       ${n.note?`<div class="notif-note">"${n.note}"</div>`:''}
-      <div style="font-size:12px;color:#1e40af;margin-top:8px;padding:6px 10px;background:#dbeafe;border-radius:7px">
-        📋 Sei stato aggiunto come collaboratore a questa sessione
-      </div>
+      ${rsvpSection}
     </div>`;
   }).join('');
 
@@ -1045,8 +1092,7 @@ function renderMyRequests(){
     const st=statusMap[r.status]||statusMap.pending;
     const borderColor=r.status==='approved'?'#a8e6cc':r.status==='rejected'?'#ffd0d0':'#fcd34d';
     const collabLine=r.collaborators&&r.collaborators.length>0
-      ?`<div class="notif-collabs" style="margin-top:6px">${r.collaborators.map(c=>`<span class="notif-collab-chip">👤 ${c}</span>`).join('')}</div>`:'';
-    return `<div class="notif-card" style="border-left:4px solid ${borderColor}">
+      ?`<div class="notif-collabs" style="margin-top:6px">${r.collaborators.map(c=>{const key=c.replace(/\s+/g,'_').toLowerCase();const rsvp=(r.collabStatus&&r.collabStatus[key])||'pending';const rsvpLabel=rsvp==='accepted'?'✓':rsvp==='declined'?'✕':'⏳';const rsvpCls=rsvp==='accepted'?'rsvp-accepted':rsvp==='declined'?'rsvp-declined':'rsvp-pending';return `<span class="notif-collab-chip" style="display:inline-flex;align-items:center;gap:4px"><span class="rsvp-chip ${rsvpCls}" style="padding:1px 5px;font-size:9px">${rsvpLabel}</span>${c}</span>`;}).join('')}</div>`:'';    return `<div class="notif-card" style="border-left:4px solid ${borderColor}">
       <div class="notif-header">
         <div>
           <div class="notif-machine">${machine.name}</div>
@@ -1077,6 +1123,30 @@ function renderMyRequests(){
   const seenCollab=collabInvites.map(([id])=>'collab_'+id);
   localStorage.setItem(seenKey,JSON.stringify([...seenReq,...seenCollab]));
   updateUserNotifBadge();
+
+  // RSVP collaborazione
+  list.querySelectorAll('.collab-rsvp-btn').forEach(btn=>{
+    btn.addEventListener('click',async()=>{
+      const reqId=btn.dataset.id;
+      const action=btn.dataset.action; // 'accepted' | 'declined'
+      const userKey=currentUser.replace(/\s+/g,'_').toLowerCase();
+      btn.disabled=true;btn.textContent='...';
+      // Aggiorna notif collaboratore
+      await fbPatch(`collab_notifs/${userKey}/${reqId}`,{status:action});
+      // Aggiorna collabStatus sulla richiesta (visibile al richiedente)
+      await fbPatch(`requests/${reqId}/collabStatus`,{[userKey]:action});
+      // Aggiorna locale
+      if(allCollabNotifs[reqId])allCollabNotifs[reqId].status=action;
+      if(allRequests[reqId]){
+        if(!allRequests[reqId].collabStatus)allRequests[reqId].collabStatus={};
+        allRequests[reqId].collabStatus[userKey]=action;
+      }
+      const label=action==='accepted'?'Partecipazione confermata':'Partecipazione rifiutata';
+      const type=action==='accepted'?'success':'';
+      showToast(label,type);
+      renderMyRequests();
+    });
+  });
 
   // Delete approved booking
   list.querySelectorAll('.bk-delete-btn').forEach(btn=>{
@@ -1434,7 +1504,7 @@ document.getElementById('modal-save').addEventListener('click',async()=>{
     const ym=`${new Date(date+'T12:00:00').getFullYear()}-${new Date(date+'T12:00:00').getMonth()}`;
     const bkData=await fbGet(`bookings/${ym}`)||{};
     if(!bkData[date])bkData[date]=[];
-    bkData[date].push({machine,timeStart,timeEnd,note,user:currentUser,collaborators,ts:Date.now()});
+    bkData[date].push({machine,timeStart,timeEnd,note,user:currentUser,collaborators,reqId,ts:Date.now()});
     await fbSet(`bookings/${ym}`,bkData);
     const d=new Date(date+'T12:00:00');
     if(d.getFullYear()===viewYear&&d.getMonth()===viewMonth)await loadBookings();
@@ -1665,6 +1735,9 @@ if(_fconf)_fconf.addEventListener('keydown',e=>{if(e.key==='Enter')document.getE
 
 function setUser(name,admin){
   currentUser=name;isAdmin=admin;
+  // Persisti sessione
+  localStorage.setItem('session_user',name);
+  localStorage.setItem('session_admin',admin?'1':'0');
   const avatar=document.getElementById('user-avatar');
   avatar.textContent=name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
   avatar.className='user-avatar'+(admin?' admin':'');
@@ -1683,6 +1756,8 @@ function setUser(name,admin){
 
 document.getElementById('change-user-btn').addEventListener('click',()=>{
   currentUser=null;isAdmin=false;
+  localStorage.removeItem('session_user');
+  localStorage.removeItem('session_admin');
   document.getElementById('user-avatar').textContent='?';
   document.getElementById('user-avatar').className='user-avatar';
   document.getElementById('user-name-disp').textContent='—';
@@ -1761,7 +1836,7 @@ async function handleUrlAction(){
       const ym=`${new Date(req.date+'T12:00:00').getFullYear()}-${new Date(req.date+'T12:00:00').getMonth()}`;
       const bkData=await fbGet(`bookings/${ym}`)||{};
       if(!bkData[req.date])bkData[req.date]=[];
-      bkData[req.date].push({machine:req.machine,timeStart:req.timeStart,timeEnd:req.timeEnd,note:req.note,user:req.user,collaborators:req.collaborators||[],ts:Date.now()});
+      bkData[req.date].push({machine:req.machine,timeStart:req.timeStart,timeEnd:req.timeEnd,note:req.note,user:req.user,collaborators:req.collaborators||[],reqId:id,ts:Date.now()});
       await fbSet(`bookings/${ym}`,bkData);
       await fbPatch(`requests/${id}`,{status:'approved'});
       if(req.collaborators&&req.collaborators.length>0)await writeCollabNotifs(id,req);
@@ -2019,15 +2094,21 @@ async function writeCollabNotifs(reqId, req){
   const notif={
     machine:req.machine,machineName:machine.name,
     date:req.date,timeStart:req.timeStart,timeEnd:req.timeEnd,
-    note:req.note||'',requester:req.user,ts:Date.now()
+    note:req.note||'',requester:req.user,ts:Date.now(),status:'pending'
   };
-  const patches={};
+  // Initialize collabStatus on the request for each collaborator
+  const collabStatus={};
   req.collaborators.forEach(name=>{
     const key=name.replace(/\s+/g,'_').toLowerCase();
-    patches[`collab_notifs/${key}/${reqId}`]=notif;
+    collabStatus[key]='pending';
   });
-  // Write all in parallel
-  await Promise.all(Object.entries(patches).map(([path,val])=>fbSet(path,val)));
+  await fbPatch(`requests/${reqId}`,{collabStatus});
+  if(allRequests[reqId])allRequests[reqId].collabStatus=collabStatus;
+  // Write notif for each collaborator
+  await Promise.all(req.collaborators.map(name=>{
+    const key=name.replace(/\s+/g,'_').toLowerCase();
+    return fbSet(`collab_notifs/${key}/${reqId}`,notif);
+  }));
 }
 
 // Multi-select dropdown for collaborators
@@ -2138,7 +2219,16 @@ selectedDate=today();
 // Init detail panel state
 const _dp=document.querySelector('#section-calendario .detail-panel');
 if(_dp)_dp.classList.add('dp-visible');
-loadPasswords().then(()=>loadDynamicUsers()).then(()=>showUserModal());
+loadPasswords().then(()=>loadDynamicUsers()).then(()=>{
+  const savedUser=localStorage.getItem('session_user');
+  const savedAdmin=localStorage.getItem('session_admin')==='1';
+  if(savedUser){
+    setUser(savedUser,savedAdmin);
+    // Non mostrare il modal — sessione ripristinata silenziosamente
+  }else{
+    showUserModal();
+  }
+});
 setInterval(loadRequests,30000);
 </script>
 </body>

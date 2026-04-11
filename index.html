@@ -141,7 +141,7 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
 
 /* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(15,22,35,.55);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px)}
-.modal{background:white;border-radius:16px;padding:28px;width:420px;max-width:calc(100vw - 40px);box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal{background:white;border-radius:16px;padding:28px;width:420px;max-width:calc(100vw - 40px);box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:visible}
 .modal h3{font-size:17px;font-weight:600;color:var(--text-dark);margin-bottom:6px}
 .modal .modal-sub{font-size:13px;color:var(--text-gray);margin-bottom:22px}
 .field{margin-bottom:16px}
@@ -174,6 +174,53 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
 .toast.error{background:#e05555}
 
 .pending-warning{background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:14px}
+.collab-wrapper{position:relative}
+.collab-trigger{width:100%;padding:9px 12px;border:1.5px solid #dde2ef;border-radius:8px;font-size:14px;font-family:'IBM Plex Sans',sans-serif;color:var(--text-gray);background:white;cursor:pointer;text-align:left;outline:none;transition:border .15s}
+.collab-trigger:hover,.collab-trigger:focus{border-color:var(--accent)}
+.collab-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:white;border:1.5px solid #dde2ef;border-radius:8px;z-index:110;max-height:180px;overflow-y:auto;box-shadow:0 4px 20px rgba(0,0,0,.1);display:none}
+.collab-dropdown.open{display:block}
+.collab-option{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;font-size:13px;color:var(--text-dark);transition:background .1s}
+.collab-option:hover{background:#f5f7fc}
+.collab-option.selected{background:#eef4ff}
+.collab-option input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;flex-shrink:0;cursor:pointer}
+.collab-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;min-height:0}
+.collab-chip{display:inline-flex;align-items:center;gap:5px;background:#eef4ff;color:#1e40af;font-size:11px;font-weight:500;padding:3px 6px 3px 10px;border-radius:5px}
+.collab-chip-x{background:none;border:none;color:#93a3d0;cursor:pointer;font-size:13px;padding:0;line-height:1;font-family:monospace}
+.collab-chip-x:hover{color:var(--red)}
+.notif-collabs{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px}
+.notif-collab-chip{font-size:11px;background:#eef4ff;color:#1e40af;padding:2px 8px;border-radius:4px;font-weight:500}
+.collab-invite-card{background:#f0f5ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:16px 18px;margin-bottom:12px}
+.collab-invite-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;background:#dbeafe;color:#1e40af;margin-bottom:8px}
+
+/* LINEE GUIDA MACCHINE */
+.machine-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px;padding-bottom:8px}
+.machine-card{background:var(--bg-card);border:1.5px solid #e2e7f0;border-radius:14px;cursor:pointer;overflow:hidden;transition:all .18s;display:flex;flex-direction:column}
+.machine-card:hover{border-color:var(--accent);box-shadow:0 4px 16px rgba(79,142,247,.12);transform:translateY(-2px)}
+.machine-card-img{height:130px;display:flex;align-items:center;justify-content:center;background:#f5f7fc}
+.machine-card-img svg{width:72px;height:72px}
+.machine-card-body{padding:14px 16px;border-top:1px solid #f0f3fa}
+.machine-card-group{font-size:10px;font-weight:600;color:var(--text-gray);letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px}
+.machine-card-name{font-size:14px;font-weight:600;color:var(--text-dark)}
+.machine-card-arrow{margin-top:8px;font-size:11px;color:var(--accent)}
+.guide-detail{display:none;width:100%}
+.guide-detail.active{display:block}
+.guide-back{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid #dde2ef;border-radius:8px;padding:6px 14px;font-size:13px;color:var(--text-gray);cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all .15s;margin-bottom:20px}
+.guide-back:hover{background:#f0f3fa;color:var(--text-dark)}
+.guide-header{display:flex;align-items:center;gap:18px;margin-bottom:24px}
+.guide-header-icon{width:72px;height:72px;border-radius:14px;background:#f5f7fc;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.guide-header-icon svg{width:42px;height:42px}
+.guide-title{font-size:20px;font-weight:600;color:var(--text-dark)}
+.guide-group{font-size:12px;color:var(--text-gray);margin-top:4px}
+.guide-section{background:var(--bg-card);border:1px solid #e2e7f0;border-radius:12px;padding:18px 20px;margin-bottom:14px}
+.guide-section-title{font-size:13px;font-weight:600;color:var(--text-gray);text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.guide-section-title span{font-size:16px}
+.guide-step-list{list-style:none;padding:0}
+.guide-step-list li{display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f5f7fc;font-size:13px;color:var(--text-dark);line-height:1.5}
+.guide-step-list li:last-child{border-bottom:none;padding-bottom:0}
+.guide-step-num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:white;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.guide-warn{background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:14px;display:flex;gap:8px;align-items:flex-start}
+.guide-chips{display:flex;flex-wrap:wrap;gap:6px}
+.guide-chip{font-size:11px;padding:3px 10px;border-radius:5px;background:#eef4ff;color:#1e40af;font-weight:500}
 </style>
 </head>
 <body>
@@ -211,9 +258,9 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
       <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
       <span>Segnala un problema</span>
     </div>
-    <div class="nav-item disabled">
+    <div class="nav-item" data-section="attrezzature">
       <svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>
-      <span>Attrezzature</span>
+      <span>Linee guida macchine/strumenti</span>
     </div>
     <div class="nav-item" id="stats-nav" data-section="statistiche">
       <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
@@ -359,6 +406,16 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
       </div>
     </div>
 
+    <!-- SEZIONE LINEE GUIDA MACCHINE -->
+    <div class="section" id="section-attrezzature">
+      <!-- GRIGLIA CARD -->
+      <div id="attrezzature-grid" style="width:100%">
+        <div class="machine-grid" id="machine-cards-grid"></div>
+      </div>
+      <!-- DETTAGLIO MACCHINA -->
+      <div id="attrezzature-detail" class="guide-detail"></div>
+    </div>
+
   </div>
 </div>
 
@@ -393,6 +450,14 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
     <div class="field">
       <label>Note (opzionale)</label>
       <textarea id="f-note" placeholder="Descrizione attività, materiali, ecc."></textarea>
+    </div>
+    <div class="field">
+      <label>Collaboratori (opzionale)</label>
+      <div class="collab-wrapper" id="collab-wrapper">
+        <button type="button" class="collab-trigger" id="collab-trigger">Seleziona collaboratori...</button>
+        <div class="collab-dropdown" id="collab-dropdown"></div>
+      </div>
+      <div class="collab-chips" id="collab-chips"></div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" id="modal-cancel">Annulla</button>
@@ -515,6 +580,7 @@ let viewMonth=new Date().getMonth();
 let selectedDate=null;
 let bookings={};   // approved bookings per current month
 let allRequests={}; // all requests (pending/approved/rejected)
+let allCollabNotifs={}; // collab invitations for current user
 let currentUser=null;
 let isAdmin=false;
 let currentSection='calendario';
@@ -547,6 +613,11 @@ async function loadBookings(){
 async function loadRequests(){
   const data=await fbGet('requests');
   allRequests=data||{};
+  if(currentUser&&!isAdmin){
+    const userKey=currentUser.replace(/\s+/g,'_').toLowerCase();
+    const cn=await fbGet(`collab_notifs/${userKey}`);
+    allCollabNotifs=cn||{};
+  }
   updatePendingBadge();
   updateUserNotifBadge();
   if(currentSection==='notifiche')renderNotifications();
@@ -883,6 +954,7 @@ function renderNotifications(){
         <div class="notif-chip"><strong>Orario:</strong> ${r.timeStart} – ${r.timeEnd}</div>
       </div>
       ${r.note?`<div class="notif-note">"${r.note}"</div>`:''}
+      ${r.collaborators&&r.collaborators.length>0?`<div class="notif-collabs">${r.collaborators.map(c=>`<span class="notif-collab-chip">👤 ${c}</span>`).join('')}</div>`:''}
       <div class="notif-actions">
         <button class="btn btn-approve" data-id="${id}">✓ Approva</button>
         <button class="btn btn-reject" data-id="${id}">✕ Rifiuta</button>
@@ -897,11 +969,12 @@ function renderNotifications(){
       const ym=`${new Date(r.date+'T12:00:00').getFullYear()}-${new Date(r.date+'T12:00:00').getMonth()}`;
       const bkData=await fbGet(`bookings/${ym}`)||{};
       if(!bkData[r.date])bkData[r.date]=[];
-      bkData[r.date].push({machine:r.machine,timeStart:r.timeStart,timeEnd:r.timeEnd,note:r.note,user:r.user,ts:Date.now()});
+      bkData[r.date].push({machine:r.machine,timeStart:r.timeStart,timeEnd:r.timeEnd,note:r.note,user:r.user,collaborators:r.collaborators||[],ts:Date.now()});
       await fbSet(`bookings/${ym}`,bkData);
       // Update request status
       allRequests[id].status='approved';
       await fbPatch(`requests/${id}`,{status:'approved'});
+      if(r.collaborators&&r.collaborators.length>0)await writeCollabNotifs(id,r);
       updatePendingBadge();renderNotifications();
       // Reload calendar if same month
       const d=new Date(r.date+'T12:00:00');
@@ -927,7 +1000,9 @@ function renderMyRequests(){
   const mine=Object.entries(allRequests)
     .filter(([,r])=>r.user===currentUser&&r.status!=='cancelled'&&r.status!=='deleted')
     .sort((a,b)=>b[1].ts-a[1].ts);
-  if(mine.length===0){
+  const collabInvites=Object.entries(allCollabNotifs).sort((a,b)=>b[1].ts-a[1].ts);
+
+  if(mine.length===0&&collabInvites.length===0){
     list.innerHTML=`<div class="notif-empty">
       <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8l8 5 8-5v10zm-8-7L4 6h16l-8 5z"/></svg>
       <div style="font-size:15px;font-weight:500;margin-bottom:4px">Nessuna richiesta inviata</div>
@@ -935,7 +1010,33 @@ function renderMyRequests(){
     </div>`;
     return;
   }
-  list.innerHTML=mine.map(([id,r])=>{
+
+  const collabHTML=collabInvites.map(([id,n])=>{
+    const machine=getMachineByID(n.machine);
+    const dateParts=n.date.split('-');
+    const dateStr=`${parseInt(dateParts[2])} ${MONTHS_IT[parseInt(dateParts[1])-1]} ${dateParts[0]}`;
+    const tsStr=new Date(n.ts).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    return `<div class="collab-invite-card">
+      <div class="collab-invite-badge">Invito collaborazione</div>
+      <div class="notif-header" style="margin-bottom:10px">
+        <div>
+          <div class="notif-machine">${machine.name}</div>
+          <div class="notif-meta">Richiesta da <strong>${n.requester}</strong> — ${tsStr}</div>
+        </div>
+        <span class="status-badge status-approved">Approvata</span>
+      </div>
+      <div class="notif-detail">
+        <div class="notif-chip"><strong>Data:</strong> ${dateStr}</div>
+        <div class="notif-chip"><strong>Orario:</strong> ${n.timeStart} – ${n.timeEnd}</div>
+      </div>
+      ${n.note?`<div class="notif-note">"${n.note}"</div>`:''}
+      <div style="font-size:12px;color:#1e40af;margin-top:8px;padding:6px 10px;background:#dbeafe;border-radius:7px">
+        📋 Sei stato aggiunto come collaboratore a questa sessione
+      </div>
+    </div>`;
+  }).join('');
+
+  const myHTML=mine.map(([id,r])=>{
     const machine=getMachineByID(r.machine);
     const dateParts=r.date.split('-');
     const dateStr=`${parseInt(dateParts[2])} ${MONTHS_IT[parseInt(dateParts[1])-1]} ${dateParts[0]}`;
@@ -943,6 +1044,8 @@ function renderMyRequests(){
     const statusMap={pending:{label:'In attesa',cls:'status-pending'},approved:{label:'Approvata',cls:'status-approved'},rejected:{label:'Rifiutata',cls:'status-rejected'}};
     const st=statusMap[r.status]||statusMap.pending;
     const borderColor=r.status==='approved'?'#a8e6cc':r.status==='rejected'?'#ffd0d0':'#fcd34d';
+    const collabLine=r.collaborators&&r.collaborators.length>0
+      ?`<div class="notif-collabs" style="margin-top:6px">${r.collaborators.map(c=>`<span class="notif-collab-chip">👤 ${c}</span>`).join('')}</div>`:'';
     return `<div class="notif-card" style="border-left:4px solid ${borderColor}">
       <div class="notif-header">
         <div>
@@ -956,7 +1059,8 @@ function renderMyRequests(){
         <div class="notif-chip"><strong>Orario:</strong> ${r.timeStart} – ${r.timeEnd}</div>
       </div>
       ${r.note?`<div class="notif-note">"${r.note}"</div>`:''}
-      ${r.status==='approved'?`<div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+      ${collabLine}
+      ${r.status==='approved'?`<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
         <div style="font-size:12px;color:#16a05a;padding:6px 10px;background:#e8faf2;border-radius:7px">✓ Prenotazione confermata — visibile nel calendario</div>
         <button class="btn btn-reject bk-delete-btn" style="font-size:11px;padding:4px 10px;margin-left:8px" data-id="${id}" data-date="${r.date}" data-user="${r.user}" data-machine="${r.machine}" data-start="${r.timeStart}" data-end="${r.timeEnd}">Elimina</button>
       </div>`:''}
@@ -964,10 +1068,14 @@ function renderMyRequests(){
       ${r.status==='rejected'?`<div style="font-size:12px;color:var(--red);padding:6px 10px;background:#fff0f0;border-radius:7px">✕ Richiesta rifiutata dall'amministratore</div>`:''}
     </div>`;
   }).join('');
+
+  list.innerHTML=collabHTML+myHTML;
+
   // Mark as seen
   const seenKey=`seen_${currentUser}`;
-  const seen=mine.map(([id])=>id);
-  localStorage.setItem(seenKey,JSON.stringify(seen));
+  const seenReq=mine.map(([id])=>id);
+  const seenCollab=collabInvites.map(([id])=>'collab_'+id);
+  localStorage.setItem(seenKey,JSON.stringify([...seenReq,...seenCollab]));
   updateUserNotifBadge();
 
   // Delete approved booking
@@ -1006,8 +1114,11 @@ function updateUserNotifBadge(){
   const seenKey=`seen_${currentUser}`;
   let seen=[];
   try{seen=JSON.parse(localStorage.getItem(seenKey)||'[]');}catch{}
-  const unseen=Object.entries(allRequests)
+  const unseenReq=Object.entries(allRequests)
     .filter(([id,r])=>r.user===currentUser&&(r.status==='approved'||r.status==='rejected')&&!seen.includes(id)).length;
+  const unseenCollab=Object.entries(allCollabNotifs)
+    .filter(([id])=>!seen.includes('collab_'+id)).length;
+  const unseen=unseenReq+unseenCollab;
   const badge=document.getElementById('user-notif-count');
   if(!badge)return;
   badge.textContent=unseen;
@@ -1287,7 +1398,7 @@ document.querySelectorAll('.nav-item[data-section]').forEach(item=>{
     item.classList.add('active');
     document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
     document.getElementById(`section-${sec}`).classList.add('active');
-    const titles={calendario:'Prenotazione Macchinari',notifiche:'Notifiche Prenotazioni','mie-richieste':'Notifiche',utenti:'Gestione Utenti',segnala:'Segnala un problema',segnalazioni:'Segnalazioni',statistiche:'Statistiche'};
+    const titles={calendario:'Prenotazione Macchinari',notifiche:'Notifiche Prenotazioni','mie-richieste':'Notifiche',utenti:'Gestione Utenti',segnala:'Segnala un problema',segnalazioni:'Segnalazioni',statistiche:'Statistiche',attrezzature:'Linee guida macchine/strumenti'};
     document.getElementById('topbar-title').textContent=titles[sec]||sec;
     if(sec==='notifiche'){renderNotifications();document.getElementById('new-btn').style.display='none';}
     else if(sec==='segnalazioni'){renderIssues();document.getElementById('new-btn').style.display='none';}
@@ -1295,6 +1406,7 @@ document.querySelectorAll('.nav-item[data-section]').forEach(item=>{
     else if(sec==='utenti'){renderUsers();document.getElementById('new-btn').style.display='none';}
     else if(sec==='segnala'){document.getElementById('new-btn').style.display='none';}
     else if(sec==='statistiche'){renderStats();document.getElementById('new-btn').style.display='none';}
+    else if(sec==='attrezzature'){renderMachineCards();document.getElementById('new-btn').style.display='none';}
     else{document.getElementById('new-btn').style.display='block';}
   });
 });
@@ -1315,21 +1427,23 @@ document.getElementById('modal-save').addEventListener('click',async()=>{
   document.getElementById('time-error').style.display='none';
 
   const reqId=`req_${Date.now()}_${Math.random().toString(36).substr(2,6)}`;
+  const collaborators=getSelectedCollaborators();
 
   if(isAdmin){
     // Admin prenota direttamente senza approvazione
     const ym=`${new Date(date+'T12:00:00').getFullYear()}-${new Date(date+'T12:00:00').getMonth()}`;
     const bkData=await fbGet(`bookings/${ym}`)||{};
     if(!bkData[date])bkData[date]=[];
-    bkData[date].push({machine,timeStart,timeEnd,note,user:currentUser,ts:Date.now()});
+    bkData[date].push({machine,timeStart,timeEnd,note,user:currentUser,collaborators,ts:Date.now()});
     await fbSet(`bookings/${ym}`,bkData);
     const d=new Date(date+'T12:00:00');
     if(d.getFullYear()===viewYear&&d.getMonth()===viewMonth)await loadBookings();
     selectedDate=date;renderCal();if(selectedDate)renderDetail(selectedDate);
+    if(collaborators&&collaborators.length>0)await writeCollabNotifs(reqId,{machine,date,timeStart,timeEnd,note,user:currentUser,collaborators});
     showToast('Prenotazione aggiunta','success');
   }else{
     // Utente normale: invia richiesta
-    const req={machine,date,timeStart,timeEnd,note,user:currentUser,ts:Date.now(),status:'pending'};
+    const req={machine,date,timeStart,timeEnd,note,user:currentUser,collaborators,ts:Date.now(),status:'pending'};
     await fbPatch('requests',{[reqId]:req});
     allRequests[reqId]=req;
     updatePendingBadge();
@@ -1348,6 +1462,7 @@ document.getElementById('new-btn').addEventListener('click',()=>{
   document.getElementById('f-time-start').value='08:00';
   document.getElementById('f-time-end').value='18:00';
   document.getElementById('time-error').style.display='none';
+  resetCollabSelect();
   const d=document.getElementById('f-date').value.split('-');
   if(d.length===3)document.getElementById('modal-sub').textContent=
     isAdmin?`${parseInt(d[2])} ${MONTHS_IT[parseInt(d[1])-1]} ${d[0]}`:`Richiesta per ${parseInt(d[2])} ${MONTHS_IT[parseInt(d[1])-1]} ${d[0]} — verrà inviata all'amministratore`;
@@ -1646,9 +1761,10 @@ async function handleUrlAction(){
       const ym=`${new Date(req.date+'T12:00:00').getFullYear()}-${new Date(req.date+'T12:00:00').getMonth()}`;
       const bkData=await fbGet(`bookings/${ym}`)||{};
       if(!bkData[req.date])bkData[req.date]=[];
-      bkData[req.date].push({machine:req.machine,timeStart:req.timeStart,timeEnd:req.timeEnd,note:req.note,user:req.user,ts:Date.now()});
+      bkData[req.date].push({machine:req.machine,timeStart:req.timeStart,timeEnd:req.timeEnd,note:req.note,user:req.user,collaborators:req.collaborators||[],ts:Date.now()});
       await fbSet(`bookings/${ym}`,bkData);
       await fbPatch(`requests/${id}`,{status:'approved'});
+      if(req.collaborators&&req.collaborators.length>0)await writeCollabNotifs(id,req);
       box.innerHTML=`<div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:16px;font-weight:600;color:#16a05a">Prenotazione approvata</div><div style="font-size:13px;color:#5a6580;margin-top:8px">${req.user} — ${machine.name}<br>${dateStr}, ${req.timeStart}–${req.timeEnd}</div>`;
     }else{
       await fbPatch(`requests/${id}`,{status:'rejected'});
@@ -1658,6 +1774,363 @@ async function handleUrlAction(){
   }catch(e){box.innerHTML='<div style="font-size:32px;margin-bottom:12px">⚠️</div><div style="font-size:15px;color:#e05555">Errore di connessione</div>';setTimeout(()=>overlay.remove(),3000);}
 }
 
+// ─── LINEE GUIDA MACCHINE ──────────────────────────────────────────────────
+
+const MACHINE_ICONS={
+  esab:`<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="10" y="50" width="60" height="10" rx="4" fill="#4f8ef7"/>
+    <rect x="34" y="20" width="12" height="30" rx="3" fill="#1a2234"/>
+    <path d="M40 20 L32 8 L36 8 L40 14 L44 8 L48 8 Z" fill="#f0a030"/>
+    <circle cx="40" cy="7" r="4" fill="#f0a030" opacity=".7"/>
+    <path d="M36 55 L44 55 L46 68 L34 68 Z" fill="#7a8aaa"/>
+    <rect x="20" y="58" width="40" height="5" rx="2" fill="#252f45"/>
+  </svg>`,
+  galdabini:`<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="34" y="4" width="12" height="18" rx="3" fill="#4f8ef7"/>
+    <rect x="28" y="20" width="24" height="8" rx="2" fill="#252f45"/>
+    <rect x="36" y="28" width="8" height="24" rx="2" fill="#7a8aaa"/>
+    <rect x="28" y="52" width="24" height="8" rx="2" fill="#252f45"/>
+    <rect x="34" y="58" width="12" height="18" rx="3" fill="#4f8ef7"/>
+    <path d="M24 36 L14 36 M24 44 L14 44" stroke="#e05555" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M56 36 L66 36 M56 44 L66 44" stroke="#e05555" stroke-width="2.5" stroke-linecap="round"/>
+  </svg>`,
+  pressa:`<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="8" y="6" width="64" height="12" rx="4" fill="#252f45"/>
+    <rect x="34" y="18" width="12" height="30" rx="2" fill="#4f8ef7"/>
+    <rect x="24" y="46" width="32" height="8" rx="3" fill="#1a2234"/>
+    <rect x="8" y="62" width="64" height="12" rx="4" fill="#7a8aaa"/>
+    <path d="M40 54 L32 62 L48 62 Z" fill="#f0a030"/>
+  </svg>`,
+  polishing:`<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="40" cy="42" r="26" fill="#e2e7f0"/>
+    <circle cx="40" cy="42" r="20" fill="#4f8ef7" opacity=".25"/>
+    <circle cx="40" cy="42" r="14" fill="#4f8ef7" opacity=".45"/>
+    <circle cx="40" cy="42" r="6" fill="#4f8ef7"/>
+    <rect x="36" y="10" width="8" height="14" rx="3" fill="#252f45"/>
+    <path d="M28 18 Q40 14 52 18" stroke="#7a8aaa" stroke-width="2" fill="none"/>
+  </svg>`,
+  sem:`<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="22" y="6" width="36" height="30" rx="5" fill="#1a2234"/>
+    <rect x="28" y="12" width="24" height="18" rx="3" fill="#4f8ef7" opacity=".3"/>
+    <rect x="36" y="36" width="8" height="16" rx="2" fill="#7a8aaa"/>
+    <path d="M34 52 L28 68 L52 68 L46 52 Z" fill="#252f45"/>
+    <circle cx="40" cy="21" r="6" fill="#4f8ef7"/>
+    <path d="M14 58 L28 68 M66 58 L52 68" stroke="#f0a030" stroke-width="1.5" stroke-dasharray="3 2"/>
+  </svg>`,
+  om:`<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="40" cy="14" rx="12" ry="8" fill="#252f45"/>
+    <rect x="36" y="20" width="8" height="20" rx="2" fill="#7a8aaa"/>
+    <circle cx="40" cy="46" r="10" fill="none" stroke="#4f8ef7" stroke-width="3"/>
+    <circle cx="40" cy="46" r="5" fill="#4f8ef7" opacity=".4"/>
+    <rect x="20" y="62" width="40" height="6" rx="3" fill="#252f45"/>
+    <rect x="36" y="56" width="8" height="8" rx="1" fill="#1a2234"/>
+    <path d="M24 62 L24 72 M56 62 L56 72" stroke="#7a8aaa" stroke-width="2" stroke-linecap="round"/>
+  </svg>`,
+  hardness:`<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="14" y="8" width="52" height="10" rx="4" fill="#252f45"/>
+    <rect x="18" y="18" width="8" height="36" rx="2" fill="#7a8aaa"/>
+    <rect x="34" y="18" width="12" height="24" rx="2" fill="#4f8ef7"/>
+    <polygon points="40,42 34,56 46,56" fill="#f0a030"/>
+    <rect x="12" y="62" width="56" height="10" rx="3" fill="#1a2234"/>
+    <circle cx="58" cy="30" r="8" fill="#e05555" opacity=".2"/>
+    <circle cx="58" cy="30" r="4" fill="#e05555"/>
+  </svg>`
+};
+
+const MACHINE_GUIDES={
+  esab:{
+    name:'ESAB',group:'Parco Macchine',
+    warning:'Indossare sempre maschera di protezione per saldatura, guanti ignifughi e grembiule in pelle. Non operare senza DPI.',
+    dpi:['Maschera per saldatura auto-oscurante','Guanti ignifughi','Grembiule in pelle','Scarpe antinfortunistiche'],
+    steps:[
+      'Verificare che l\'area di lavoro sia sgombra da materiali infiammabili nel raggio di 2 m.',
+      'Collegare il cavo di massa al pezzo da saldare, il più vicino possibile al punto di saldatura.',
+      'Selezionare il tipo di processo (MIG/MAG, TIG, MMA) tramite il pannello frontale.',
+      'Impostare corrente e tensione in base allo spessore del materiale e al tipo di elettrodo/filo.',
+      'Regolare la portata del gas di protezione (Ar o CO₂ mix) tra 10 e 20 L/min.',
+      'Accendere la macchina e attendere il ciclo di auto-test (spia verde fissa).',
+      'Eseguire la saldatura mantenendo angolo e velocità di avanzamento costanti.',
+      'Al termine, spegnere il gas, poi la macchina. Attendere il raffreddamento prima di rimuovere i DPI.',
+    ],
+    notes:'Verificare periodicamente l\'usura degli ugelli e della punta di contatto. Sostituire il filo quando rimangono meno di 200 g sulla bobina.'
+  },
+  galdabini:{
+    name:'Galdabini',group:'Parco Macchine',
+    warning:'Non superare il carico massimo della cella di carico installata. Verificare il corretto serraggio delle ganasce prima di avviare il test.',
+    dpi:['Occhiali di protezione','Scarpe antinfortunistiche'],
+    steps:[
+      'Accendere la macchina e il PC di controllo; avviare il software Quasar.',
+      'Selezionare il tipo di prova (trazione, compressione, flessione) e caricare il metodo di prova appropriato.',
+      'Montare le ganasce corrette in funzione della geometria del provino (piatto, cilindrico, ecc.).',
+      'Azzerare la forza e lo spostamento tramite il pannello software prima di inserire il provino.',
+      'Posizionare il provino al centro delle ganasce e serrare con la chiave dinamometrica fino al valore indicato nella procedura.',
+      'Impostare velocità di traversa, precarico e criteri di stop (forza massima o deformazione limite).',
+      'Avviare il test; non avvicinarsi al provino durante l\'esecuzione.',
+      'Al termine, esportare i dati (CSV/Excel) e rimuovere il provino. Pulire le ganasce da eventuali residui.',
+    ],
+    notes:'Calibrare la cella di carico con le masse certificate prima di ogni sessione sperimentale o dopo sostituzione.'
+  },
+  pressa:{
+    name:'Pressa meccanica industriale',group:'Parco Macchine',
+    warning:'MACCHINA A RISCHIO ELEVATO. Operare solo dopo specifica formazione. Mai inserire le mani nell\'area di lavoro con la macchina in tensione.',
+    dpi:['Guanti anti-taglio','Occhiali di protezione','Scarpe antinfortunistiche','Protezioni uditive'],
+    steps:[
+      'Verificare che le protezioni fisse e mobili siano in posizione e funzionanti prima di accendere.',
+      'Accendere il quadro elettrico generale e attendere il completamento dell\'autodiagnosi.',
+      'Montare lo stampo correttamente sulle piastre portastampo; serrare tutti i bulloni con coppia prevista.',
+      'Impostare la corsa, la velocità e la forza di chiusura dal pannello di controllo in base alla scheda tecnica del processo.',
+      'Eseguire un ciclo a secco (senza materiale) per verificare il corretto funzionamento.',
+      'Posizionare il foglio/pezzo tramite guide o robot di carico; non operare manualmente a macchina in moto.',
+      'Avviare il ciclo produttivo; monitorare i parametri di processo sul display.',
+      'A fine produzione: spegnere la pressa, scaricare la pressione idraulica residua, pulire stampo e piano di lavoro.',
+    ],
+    notes:'Registrare ogni utilizzo nel logbook della macchina con data, operatore, materiale e numero di cicli eseguiti.'
+  },
+  polishing:{
+    name:'Polishing automatico',group:'Laboratorio Metallografico',
+    warning:'Prestare attenzione alla rotazione dei dischi. Non abbandonare il campione durante la lucidatura senza inserire il blocco meccanico.',
+    dpi:['Guanti in nitrile','Occhiali di protezione','Camice da laboratorio'],
+    steps:[
+      'Preparare il campione: montarlo in resina (a caldo o a freddo) se non già incluso.',
+      'Selezionare la sequenza di carte abrasive in ordine decrescente di granulometria (es. 320 → 800 → 1200 → 2500 µm).',
+      'Montare il disco abrasivo corretto sull\'attacco magnetico o a baionetta.',
+      'Impostare velocità di rotazione del disco e del porta-campioni, forza di contatto e tempo per ogni step.',
+      'Avviare il flusso di lubrificante/acqua distillata prima di avviare la rotazione.',
+      'Eseguire la lucidatura finale con panno OP-S e sospensione colloidale di SiO₂ (0,04 µm) o pasta diamantata (1 µm).',
+      'Risciacquare con acqua distillata, poi con etanolo, e asciugare con aria compressa.',
+      'Verificare l\'assenza di graffi e buckles all\'ottico prima di procedere con l\'attacco chimico o l\'analisi.',
+    ],
+    notes:'Sostituire i panni abrasivi quando si osservano graffi ricorrenti nonostante il corretto utilizzo. Mantenere pulite le vasche del lubrificante.'
+  },
+  sem:{
+    name:'SEM',group:'Laboratorio Metallografico',
+    warning:'La colonna del fascio è sotto vuoto spinto. Non aprire la camera se la pompa è in funzione. Segnalare immediatamente qualsiasi perdita di vuoto.',
+    dpi:['Guanti in nitrile (manipolazione campioni)','Occhiali se si usa metallizzatore'],
+    steps:[
+      'Verificare che il sistema di raffreddamento (acqua o Peltier) sia attivo e nei parametri.',
+      'Avviare il software di controllo (es. SmartSEM) e attendere la stabilizzazione della tensione di accelerazione.',
+      'Preparare il campione: campioni non conduttori devono essere metallizzati (Au, Pt o C) con lo sputter coater.',
+      'Aprire la camera (vent), montare il campione sullo stub con pasta conduttiva o nastro di carbonio, inserire nella camera.',
+      'Avviare il pompaggio e attendere il raggiungimento del vuoto operativo (< 10⁻⁴ Pa per SEM convenzionale).',
+      'Impostare tensione di accelerazione (tipicamente 5–20 kV), corrente del fascio e working distance (8–10 mm).',
+      'Focalizzare l\'immagine e ottimizzare stigmatismo e apertura con i controlli di allineamento.',
+      'Acquisire immagini BSE/SE e/o spettri EDS; salvare in formato TIFF non compresso.',
+      'Al termine: ridurre HV a 0, aprire camera, rimuovere campione, chiudere camera e lasciare in stand-by pompato.',
+    ],
+    notes:'Il filamento a emissione termoionica ha vita limitata (~100 h). Annotare le ore di utilizzo sul registro del SEM.'
+  },
+  om:{
+    name:'Optical Microscope',group:'Laboratorio Metallografico',
+    warning:'Non toccare le superfici ottiche delle lenti. Usare solo carta ottica e soluzioni apposite per la pulizia.',
+    dpi:['Guanti in nitrile per manipolazione campioni'],
+    steps:[
+      'Accendere la sorgente luminosa e impostare l\'intensità al minimo; aumentare gradualmente per evitare shock termici alla lampada.',
+      'Posizionare il campione sul piano portaoggetti con la superficie polita rivolta verso l\'obiettivo.',
+      'Partire dall\'obiettivo a minor ingrandimento (2.5× o 5×) per individuare la zona di interesse.',
+      'Mettere a fuoco grossolanamente con la manopola macrometrica, poi raffinare con la micrometrica.',
+      'Selezionare il campo chiaro, campo scuro o luce polarizzata in base al tipo di analisi.',
+      'Per acquisizione digitale: collegare il software di acquisizione (Leica LAS, NIS-Elements o simile) e calibrare la scala.',
+      'Acquisire le immagini alle magnificazioni richieste; includere sempre la scala metrica nell\'immagine.',
+      'Al termine, riportare l\'obiettivo a 2.5×, spegnere la lampada e coprire il microscopio.',
+    ],
+    notes:'Pulire gli obiettivi dopo ogni sessione con carta ottica + isopropanolo in piccole quantità. Non usare acetone. Verificare la calibrazione della scala digitale con un vetrino micrometrico certificato.'
+  },
+  hardness:{
+    name:'Hardness machine',group:'Laboratorio Metallografico',
+    warning:'Non cambiare l\'indentatore con la macchina sotto carico. Verificare che il campione sia stabile e piano prima di avviare la misura.',
+    dpi:['Occhiali di protezione','Guanti in nitrile'],
+    steps:[
+      'Selezionare la scala di durezza (HV, HRC, HRB, HB) in base al materiale e al range atteso.',
+      'Montare l\'indentatore corrispondente (diamante Vickers 136°, cono Rockwell, o sfera Brinell).',
+      'Posizionare il campione sul piano porta-provini; assicurarsi che sia planare e stabile.',
+      'Selezionare il carico applicato (es. HV0.1, HV1, HV10) dal pannello o dal software.',
+      'Avviare l\'indentazione; il carico viene applicato automaticamente con rampa controllata.',
+      'Per Vickers/Knoop: misurare le diagonali dell\'impronta con il microscopio integrato o automatico.',
+      'Registrare almeno 5 misure per campione; escludere outlier secondo la norma ISO 6507 o ASTM E384.',
+      'Pulire l\'indentatore e il piano porta-provini con panno in microfibra dopo ogni sessione.',
+    ],
+    notes:'Verificare la calibrazione con blocchi di riferimento certificati all\'inizio di ogni sessione. Distanza minima tra indentazioni: 2.5× la diagonale dell\'impronta (ISO 6507-1).'
+  }
+};
+
+function svgForMachine(id){return MACHINE_ICONS[id]||MACHINE_ICONS['hardness'];}
+
+function renderMachineCards(){
+  const grid=document.getElementById('machine-cards-grid');
+  const detail=document.getElementById('attrezzature-detail');
+  document.getElementById('attrezzature-grid').style.display='block';
+  detail.classList.remove('active');
+  detail.innerHTML='';
+  grid.innerHTML='';
+  MACHINE_GROUPS.forEach(group=>{
+    group.machines.forEach(m=>{
+      const card=document.createElement('div');
+      card.className='machine-card';
+      card.innerHTML=`
+        <div class="machine-card-img">${svgForMachine(m.id)}</div>
+        <div class="machine-card-body">
+          <div class="machine-card-group">${group.label}</div>
+          <div class="machine-card-name">${m.name}</div>
+          <div class="machine-card-arrow">Apri guida →</div>
+        </div>`;
+      card.addEventListener('click',()=>renderMachineDetail(m.id));
+      grid.appendChild(card);
+    });
+  });
+}
+
+function renderMachineDetail(machineId){
+  const guide=MACHINE_GUIDES[machineId];
+  if(!guide)return;
+  document.getElementById('attrezzature-grid').style.display='none';
+  const detail=document.getElementById('attrezzature-detail');
+  detail.classList.add('active');
+  const dpiItems=guide.dpi.map(d=>`<li class="guide-step-list" style="display:list-item;list-style:disc;margin-left:18px;font-size:13px;color:var(--text-dark);padding:4px 0">${d}</li>`).join('');
+  const steps=guide.steps.map((s,i)=>`<li><div class="guide-step-num">${i+1}</div><span>${s}</span></li>`).join('');
+  detail.innerHTML=`
+    <button class="guide-back" onclick="renderMachineCards()">← Torna alle macchine</button>
+    <div class="guide-header">
+      <div class="guide-header-icon">${svgForMachine(machineId)}</div>
+      <div>
+        <div class="guide-title">${guide.name}</div>
+        <div class="guide-group">${guide.group}</div>
+      </div>
+    </div>
+    <div class="guide-warn"><span style="font-size:18px;flex-shrink:0">⚠️</span><span>${guide.warning}</span></div>
+    <div class="guide-section">
+      <div class="guide-section-title"><span>🦺</span> DPI richiesti</div>
+      <ul style="list-style:disc;padding-left:18px">${guide.dpi.map(d=>`<li style="font-size:13px;color:var(--text-dark);padding:4px 0">${d}</li>`).join('')}</ul>
+    </div>
+    <div class="guide-section">
+      <div class="guide-section-title"><span>📋</span> Procedura operativa</div>
+      <ul class="guide-step-list">${steps}</ul>
+    </div>
+    <div class="guide-section">
+      <div class="guide-section-title"><span>📝</span> Note operative</div>
+      <p style="font-size:13px;color:var(--text-dark);line-height:1.6">${guide.notes}</p>
+    </div>`;
+}
+
+// ─── COLLABORATORI ─────────────────────────────────────────────────────────
+
+async function writeCollabNotifs(reqId, req){
+  if(!req.collaborators||req.collaborators.length===0)return;
+  const machine=getMachineByID(req.machine);
+  const notif={
+    machine:req.machine,machineName:machine.name,
+    date:req.date,timeStart:req.timeStart,timeEnd:req.timeEnd,
+    note:req.note||'',requester:req.user,ts:Date.now()
+  };
+  const patches={};
+  req.collaborators.forEach(name=>{
+    const key=name.replace(/\s+/g,'_').toLowerCase();
+    patches[`collab_notifs/${key}/${reqId}`]=notif;
+  });
+  // Write all in parallel
+  await Promise.all(Object.entries(patches).map(([path,val])=>fbSet(path,val)));
+}
+
+// Multi-select dropdown for collaborators
+let selectedCollaborators=[];
+
+function buildCollabUsers(){
+  // All registered users except current user
+  const staticUsers=[
+    'Simone Amantia','Davide Campanella','Riccardo Puleo','Gaetano Pollara',
+    'Salvatore Russo','Gianluca Buffa','Giuseppe Ingarao','Kirill Kalashnikov',
+    'Sajjad Emami','Sangam Sangral','Maria Gloria Trapani','Manuela Caspio'
+  ];
+  // Also include any dynamic users loaded from Firebase
+  const sel=document.getElementById('f-username');
+  const dynamic=Array.from(sel.options)
+    .map(o=>o.value)
+    .filter(v=>v&&v!=='__nuovo__'&&v.toUpperCase()!=='AMMINISTRATORE'&&!staticUsers.includes(v));
+  return [...new Set([...staticUsers,...dynamic])].filter(n=>n!==currentUser).sort();
+}
+
+function resetCollabSelect(){
+  selectedCollaborators=[];
+  const dropdown=document.getElementById('collab-dropdown');
+  const chips=document.getElementById('collab-chips');
+  const trigger=document.getElementById('collab-trigger');
+  if(!dropdown||!chips||!trigger)return;
+  dropdown.classList.remove('open');
+  chips.innerHTML='';
+  trigger.textContent='Seleziona collaboratori...';
+
+  const users=buildCollabUsers();
+  dropdown.innerHTML=users.map(name=>`
+    <div class="collab-option" data-name="${name}">
+      <input type="checkbox" value="${name}">
+      <span>${name}</span>
+    </div>`).join('');
+
+  dropdown.querySelectorAll('.collab-option').forEach(opt=>{
+    opt.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      const name=opt.dataset.name;
+      const cb=opt.querySelector('input');
+      const idx=selectedCollaborators.indexOf(name);
+      if(idx===-1){
+        selectedCollaborators.push(name);
+        cb.checked=true;
+        opt.classList.add('selected');
+      }else{
+        selectedCollaborators.splice(idx,1);
+        cb.checked=false;
+        opt.classList.remove('selected');
+      }
+      renderCollabChips();
+    });
+  });
+}
+
+function renderCollabChips(){
+  const chips=document.getElementById('collab-chips');
+  const trigger=document.getElementById('collab-trigger');
+  if(!chips||!trigger)return;
+  if(selectedCollaborators.length===0){
+    trigger.textContent='Seleziona collaboratori...';
+    chips.innerHTML='';
+    return;
+  }
+  trigger.textContent=`${selectedCollaborators.length} collaborator${selectedCollaborators.length>1?'i':'e'} selezionat${selectedCollaborators.length>1?'i':'o'}`;
+  chips.innerHTML=selectedCollaborators.map(name=>`
+    <span class="collab-chip">
+      ${name}
+      <button class="collab-chip-x" data-name="${name}" onclick="removeCollab(this)">×</button>
+    </span>`).join('');
+}
+
+function removeCollab(btn){
+  const name=btn.dataset.name;
+  selectedCollaborators=selectedCollaborators.filter(n=>n!==name);
+  // Uncheck in dropdown
+  const dropdown=document.getElementById('collab-dropdown');
+  dropdown.querySelectorAll('.collab-option').forEach(opt=>{
+    if(opt.dataset.name===name){
+      opt.querySelector('input').checked=false;
+      opt.classList.remove('selected');
+    }
+  });
+  renderCollabChips();
+}
+
+function getSelectedCollaborators(){
+  return [...selectedCollaborators];
+}
+
+// Toggle dropdown
+document.getElementById('collab-trigger').addEventListener('click',(e)=>{
+  e.stopPropagation();
+  document.getElementById('collab-dropdown').classList.toggle('open');
+});
+document.addEventListener('click',()=>{
+  const dd=document.getElementById('collab-dropdown');
+  if(dd)dd.classList.remove('open');
+});
+
+// ─── URL ACTION HANDLER ─────────────────────────────────────────────────────
 handleUrlAction();
 renderLegend();
 populateMachineSelect();

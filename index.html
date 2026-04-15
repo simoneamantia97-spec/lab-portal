@@ -965,13 +965,13 @@ function renderMyRequests(){
       <div class="notif-header" style="margin-bottom:10px">
         <div>
           <div class="notif-machine">${machine.name}</div>
-          <div class="notif-meta">Richiesta da <strong>${n.requester}</strong> — ${tsStr}</div>
+          <div class="notif-meta">Richiesta da <strong>${n.requester}></strong> — ${tsStr}</div>
         </div>
         <span class="status-badge status-approved">Approvata</span>
       </div>
       <div class="notif-detail">
-        <div class="notif-chip"><strong>'+T('chipDate')+'</strong> ${dateStr}</div>
-        <div class="notif-chip"><strong>'+T('chipTime')+'</strong> ${n.timeStart} – ${n.timeEnd}</div>
+        <div class="notif-chip"><strong>${T('chipDate')}</strong> ${dateStr}</div>
+        <div class="notif-chip"><strong>${T('chipTime')}</strong> ${n.timeStart} – ${n.timeEnd}</div>
       </div>
       ${n.note?`<div class="notif-note">"${n.note}"</div>`:''}
       ${rsvpSection}
@@ -992,13 +992,13 @@ function renderMyRequests(){
       <div class="notif-header">
         <div>
           <div class="notif-machine">${machine.name}</div>
-          <div class="notif-meta">'+T('bookedOn')+' ${tsStr}</div>
+          <div class="notif-meta">${T('bookedOn')} ${tsStr}</div>
         </div>
         <span class="status-badge status-approved">${T('confirmed')}</span>
       </div>
       <div class="notif-detail">
-        <div class="notif-chip"><strong>'+T('chipDate')+'</strong> ${dateStr}</div>
-        <div class="notif-chip"><strong>'+T('chipTime')+'</strong> ${r.timeStart} – ${r.timeEnd}</div>
+        <div class="notif-chip"><strong>${T('chipDate')}</strong> ${dateStr}</div>
+        <div class="notif-chip"><strong>${T('chipTime')}</strong> ${r.timeStart} – ${r.timeEnd}</div>
       </div>
       ${r.note?`<div class="notif-note">"${r.note}"</div>`:''}
       ${collabLine}
@@ -1239,7 +1239,7 @@ function renderIssues(){
       <div class="notif-header">
         <div>
           <div class="notif-machine">🔧 ${machine.name}</div>
-          <div class="notif-meta">${T('issueFrom')} <strong>${issue.user}</strong> — ${tsStr}</div>
+          <div class="notif-meta">${T('issueFrom')} <strong>${issue.user}></strong> — ${tsStr}</div>
         </div>
         <span class="status-badge ${isResolved?'status-approved':'status-pending'}">${isResolved?T('issueResolved'):T('issueOpen')}</span>
       </div>

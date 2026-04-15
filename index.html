@@ -259,11 +259,6 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
       <span>Calendario</span>
       <span class="nav-badge" id="month-count">0</span>
     </div>
-    <div class="nav-item" id="notif-nav" data-section="notifiche" style="display:none">
-      <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
-      <span>Notifiche</span>
-      <span class="nav-badge red" id="pending-count" style="display:none">0</span>
-    </div>
     <div class="nav-item" id="users-nav" data-section="utenti" style="display:none">
       <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
       <span>Gestione Utenti</span>
@@ -418,13 +413,6 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
       </div>
     </div>
 
-    <!-- SEZIONE NOTIFICHE (admin) -->
-    <div class="section" id="section-notifiche">
-      <div class="notif-section">
-        <div id="notif-list"></div>
-      </div>
-    </div>
-
     <!-- SEZIONE LINEE GUIDA MACCHINE -->
     <div class="section" id="section-attrezzature">
       <!-- GRIGLIA CARD -->
@@ -442,7 +430,7 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
 <div class="modal-overlay" id="modal" style="display:none">
   <div class="modal">
     <h3>Nuova Prenotazione</h3>
-    <p class="modal-sub" id="modal-sub">La richiesta verrà inviata all'amministratore per approvazione</p>
+    <p class="modal-sub" id="modal-sub">La prenotazione verrà confermata se la fascia oraria è libera</p>
     <div class="field">
       <label>Macchinario</label>
       <select id="f-machine"></select>
@@ -480,7 +468,7 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" id="modal-cancel">Annulla</button>
-      <button class="btn btn-primary" id="modal-save">Invia richiesta</button>
+      <button class="btn btn-primary" id="modal-save">Prenota</button>
     </div>
   </div>
 </div>
@@ -638,15 +626,6 @@ async function loadRequests(){
     const userKey=currentUser.replace(/\s+/g,'_').toLowerCase();
     const cn=await fbGet(`collab_notifs/${userKey}`);
     allCollabNotifs=cn||{};
-    // Se una mia richiesta è passata da pending ad approved → ricarica calendario
-    const newlyApproved=Object.entries(allRequests).filter(([id,r])=>
-      r.user===currentUser&&r.status==='approved'&&
-      prevRequests[id]&&prevRequests[id].status==='pending'
-    );
-    if(newlyApproved.length>0){
-      await loadBookings();
-      showToast('Prenotazione approvata — calendario aggiornato','success');
-    }
     // Se un collaboratore ha risposto → aggiorna il pannello dettaglio se visibile
     const collabStatusChanged=Object.entries(allRequests).some(([id,r])=>{
       if(!prevRequests[id]||!r.collabStatus)return false;
@@ -655,18 +634,8 @@ async function loadRequests(){
     });
     if(collabStatusChanged&&selectedDate)renderDetail(selectedDate);
   }
-  updatePendingBadge();
   updateUserNotifBadge();
-  if(currentSection==='notifiche')renderNotifications();
   if(currentSection==='mie-richieste')renderMyRequests();
-}
-
-function updatePendingBadge(){
-  const pending=Object.values(allRequests).filter(r=>r.status==='pending').length;
-  const badge=document.getElementById('pending-count');
-  if(!badge)return;
-  badge.textContent=pending;
-  badge.style.display=pending>0?'block':'none';
 }
 
 // CALENDAR
@@ -871,32 +840,7 @@ function renderDetail(key){
   const list=document.getElementById('detail-list');
   const items=bookings[key]||[];
 
-  // For non-admin: also show own pending/rejected requests for this day
-  let extraHtml='';
-  if(!isAdmin){
-    const myPending=Object.entries(allRequests).filter(([,r])=>r.date===key&&r.user===currentUser&&(r.status==='pending'||r.status==='rejected'));
-    if(myPending.length>0){
-      extraHtml=myPending.map(([id,r])=>{
-        const machine=getMachineByID(r.machine);
-        const statusLabel=r.status==='pending'?'In attesa':'Rifiutata';
-        const statusClass=r.status==='pending'?'status-pending':'status-rejected';
-        const cancelBtn=r.status==='pending'?`<button class="booking-del req-cancel" data-id="${id}" title="Annulla richiesta">&#10005;</button>`:'';
-        return `<div class="booking-item">
-          <div class="booking-color ${colorClass(machine.color)}" style="opacity:.5"></div>
-          <div class="booking-info">
-            <div class="booking-machine">${machine.name}</div>
-            <div class="booking-user">${r.user}</div>
-            <div class="booking-time">${r.timeStart} – ${r.timeEnd}</div>
-            ${r.note?`<div class="booking-note">${r.note}</div>`:''}
-            <span class="status-badge ${statusClass}">${statusLabel}</span>
-          </div>
-          ${cancelBtn}
-        </div>`;
-      }).join('');
-    }
-  }
-
-  if(items.length===0&&!extraHtml){list.innerHTML='<div class="no-bookings">Nessuna prenotazione</div>';return;}
+  if(items.length===0){list.innerHTML='<div class="no-bookings">Nessuna prenotazione</div>';return;}
   list.innerHTML=items.map((b,i)=>{
     const machine=getMachineByID(b.machine);
     const timeStr=`${b.timeStart} – ${b.timeEnd}`;
@@ -926,7 +870,7 @@ function renderDetail(key){
       </div>
       ${delBtn}
     </div>`;
-  }).join('')+extraHtml;
+  }).join('');
 
   list.querySelectorAll('.booking-del').forEach(btn=>{
     btn.addEventListener('click',async()=>{
@@ -978,81 +922,11 @@ function populateMachineSelect(){
   ).join('');
 }
 
-// NOTIFICATIONS (admin)
-function renderNotifications(){
-  const pending=Object.entries(allRequests).filter(([,r])=>r.status==='pending').sort((a,b)=>a[1].ts-b[1].ts);
-  const list=document.getElementById('notif-list');
-  if(pending.length===0){
-    list.innerHTML=`<div class="notif-empty">
-      <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
-      <div style="font-size:15px;font-weight:500;margin-bottom:4px">Nessuna richiesta in attesa</div>
-      <div style="font-size:13px">Tutte le prenotazioni sono state gestite</div>
-    </div>`;
-    return;
-  }
-  list.innerHTML=pending.map(([id,r])=>{
-    const machine=getMachineByID(r.machine);
-    const dateParts=r.date.split('-');
-    const dateStr=`${parseInt(dateParts[2])} ${MONTHS_IT[parseInt(dateParts[1])-1]} ${dateParts[0]}`;
-    const tsStr=new Date(r.ts).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-    return `<div class="notif-card">
-      <div class="notif-header">
-        <div>
-          <div class="notif-machine">${machine.name}</div>
-          <div class="notif-meta">Richiesta da <strong>${r.user}</strong> — ${tsStr}</div>
-        </div>
-        <span class="status-badge status-pending">In attesa</span>
-      </div>
-      <div class="notif-detail">
-        <div class="notif-chip"><strong>Data:</strong> ${dateStr}</div>
-        <div class="notif-chip"><strong>Orario:</strong> ${r.timeStart} – ${r.timeEnd}</div>
-      </div>
-      ${r.note?`<div class="notif-note">"${r.note}"</div>`:''}
-      ${r.collaborators&&r.collaborators.length>0?`<div class="notif-collabs">${r.collaborators.map(c=>`<span class="notif-collab-chip">👤 ${c}</span>`).join('')}</div>`:''}
-      <div class="notif-actions">
-        <button class="btn btn-approve" data-id="${id}">✓ Approva</button>
-        <button class="btn btn-reject" data-id="${id}">✕ Rifiuta</button>
-      </div>
-    </div>`;
-  }).join('');
-
-  list.querySelectorAll('.btn-approve').forEach(btn=>{
-    btn.addEventListener('click',async()=>{
-      const id=btn.dataset.id;const r=allRequests[id];
-      // Add to bookings
-      const ym=`${new Date(r.date+'T12:00:00').getFullYear()}-${new Date(r.date+'T12:00:00').getMonth()}`;
-      const bkData=await fbGet(`bookings/${ym}`)||{};
-      if(!bkData[r.date])bkData[r.date]=[];
-      bkData[r.date].push({machine:r.machine,timeStart:r.timeStart,timeEnd:r.timeEnd,note:r.note,user:r.user,collaborators:r.collaborators||[],reqId:id,ts:Date.now()});
-      await fbSet(`bookings/${ym}`,bkData);
-      // Update request status
-      allRequests[id].status='approved';
-      await fbPatch(`requests/${id}`,{status:'approved'});
-      if(r.collaborators&&r.collaborators.length>0)await writeCollabNotifs(id,r);
-      updatePendingBadge();renderNotifications();
-      // Reload calendar if same month
-      const d=new Date(r.date+'T12:00:00');
-      if(d.getFullYear()===viewYear&&d.getMonth()===viewMonth)await loadBookings();
-      showToast('Prenotazione approvata','success');
-    });
-  });
-
-  list.querySelectorAll('.btn-reject').forEach(btn=>{
-    btn.addEventListener('click',async()=>{
-      const id=btn.dataset.id;
-      allRequests[id].status='rejected';
-      await fbPatch(`requests/${id}`,{status:'rejected'});
-      updatePendingBadge();renderNotifications();
-      showToast('Prenotazione rifiutata','error');
-    });
-  });
-}
-
 // LE MIE RICHIESTE (utenti normali)
 function renderMyRequests(){
   const list=document.getElementById('mie-richieste-list');
   const mine=Object.entries(allRequests)
-    .filter(([,r])=>r.user===currentUser&&r.status!=='cancelled'&&r.status!=='deleted')
+    .filter(([,r])=>r.user===currentUser&&r.status==='approved')
     .sort((a,b)=>b[1].ts-a[1].ts);
   const collabInvites=Object.entries(allCollabNotifs).sort((a,b)=>b[1].ts-a[1].ts);
 
@@ -1108,13 +982,14 @@ function renderMyRequests(){
     const st=statusMap[r.status]||statusMap.pending;
     const borderColor=r.status==='approved'?'#a8e6cc':r.status==='rejected'?'#ffd0d0':'#fcd34d';
     const collabLine=r.collaborators&&r.collaborators.length>0
-      ?`<div class="notif-collabs" style="margin-top:6px">${r.collaborators.map(c=>{const key=c.replace(/\s+/g,'_').toLowerCase();const rsvp=(r.collabStatus&&r.collabStatus[key])||'pending';const rsvpLabel=rsvp==='accepted'?'✓':rsvp==='declined'?'✕':'⏳';const rsvpCls=rsvp==='accepted'?'rsvp-accepted':rsvp==='declined'?'rsvp-declined':'rsvp-pending';return `<span class="notif-collab-chip" style="display:inline-flex;align-items:center;gap:4px"><span class="rsvp-chip ${rsvpCls}" style="padding:1px 5px;font-size:9px">${rsvpLabel}</span>${c}</span>`;}).join('')}</div>`:'';    return `<div class="notif-card" style="border-left:4px solid ${borderColor}">
+      ?`<div class="notif-collabs" style="margin-top:6px">${r.collaborators.map(c=>{const key=c.replace(/\s+/g,'_').toLowerCase();const rsvp=(r.collabStatus&&r.collabStatus[key])||'pending';const rsvpLabel=rsvp==='accepted'?'✓':rsvp==='declined'?'✕':'⏳';const rsvpCls=rsvp==='accepted'?'rsvp-accepted':rsvp==='declined'?'rsvp-declined':'rsvp-pending';return `<span class="notif-collab-chip" style="display:inline-flex;align-items:center;gap:4px"><span class="rsvp-chip ${rsvpCls}" style="padding:1px 5px;font-size:9px">${rsvpLabel}</span>${c}</span>`;}).join('')}</div>`:'';
+    return `<div class="notif-card" style="border-left:4px solid #a8e6cc">
       <div class="notif-header">
         <div>
           <div class="notif-machine">${machine.name}</div>
-          <div class="notif-meta">Inviata il ${tsStr}</div>
+          <div class="notif-meta">Prenotata il ${tsStr}</div>
         </div>
-        <span class="status-badge ${st.cls}">${st.label}</span>
+        <span class="status-badge status-approved">Confermata</span>
       </div>
       <div class="notif-detail">
         <div class="notif-chip"><strong>Data:</strong> ${dateStr}</div>
@@ -1122,12 +997,10 @@ function renderMyRequests(){
       </div>
       ${r.note?`<div class="notif-note">"${r.note}"</div>`:''}
       ${collabLine}
-      ${r.status==='approved'?`<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
-        <div style="font-size:12px;color:#16a05a;padding:6px 10px;background:#e8faf2;border-radius:7px">✓ Prenotazione confermata — visibile nel calendario</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+        <div style="font-size:12px;color:#16a05a;padding:6px 10px;background:#e8faf2;border-radius:7px">✓ Visibile nel calendario</div>
         <button class="btn btn-reject bk-delete-btn" style="font-size:11px;padding:4px 10px;margin-left:8px" data-id="${id}" data-date="${r.date}" data-user="${r.user}" data-machine="${r.machine}" data-start="${r.timeStart}" data-end="${r.timeEnd}">Elimina</button>
-      </div>`:''}
-      ${r.status==='pending'?`<div style="display:flex;justify-content:flex-end;margin-top:4px"><button class="btn btn-ghost req-cancel-notif" style="font-size:11px;padding:4px 10px" data-id="${id}">Annulla richiesta</button></div>`:''}
-      ${r.status==='rejected'?`<div style="font-size:12px;color:var(--red);padding:6px 10px;background:#fff0f0;border-radius:7px">✕ Richiesta rifiutata dall'amministratore</div>`:''}
+      </div>
     </div>`;
   }).join('');
 
@@ -1180,16 +1053,6 @@ function renderMyRequests(){
       allRequests[id].status='deleted';
       if(d.getFullYear()===viewYear&&d.getMonth()===viewMonth)await loadBookings();
       renderMyRequests();showToast('Prenotazione eliminata');
-    });
-  });
-
-  // Cancel pending request
-  list.querySelectorAll('.req-cancel-notif').forEach(btn=>{
-    btn.addEventListener('click',async()=>{
-      const id=btn.dataset.id;
-      await fbPatch(`requests/${id}`,{status:'cancelled'});
-      allRequests[id].status='cancelled';
-      renderMyRequests();showToast('Richiesta annullata');
     });
   });
 
@@ -1331,11 +1194,6 @@ document.addEventListener('click',async e=>{
   const issueId=`issue_${Date.now()}_${Math.random().toString(36).substr(2,6)}`;
   const issue={machine,desc,user:currentUser,ts:Date.now(),status:'open'};
   await fbPatch('issues',{[issueId]:issue});
-  // Telegram
-  const machineName=getMachineByID(machine).name;
-  const tsStr=new Date(issue.ts).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-  const tgText=`🔧 *Segnalazione problema*\n\n👤 Utente: *${currentUser}*\n🔩 Macchinario: *${machineName}*\n📝 Problema: _${desc}_\n🕐 ${tsStr}`;
-  await sendTelegramMessage(tgText);
   // Reset form
   document.getElementById('segnala-machine').value='';
   document.getElementById('segnala-desc').value='';
@@ -1344,17 +1202,6 @@ document.addEventListener('click',async e=>{
   showToast('Segnalazione inviata','success');
   updateIssuesBadge();
 });
-
-async function sendTelegramMessage(text){
-  try{
-    const res=await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({chat_id:TG_CHAT,text,parse_mode:'Markdown'})
-    });
-    const json=await res.json();
-    if(!json.ok)console.error('Telegram error:',json.description);
-  }catch(e){console.error('Telegram fetch error:',e);}
-}
 
 let allIssues={};
 async function loadIssues(){
@@ -1486,8 +1333,7 @@ document.querySelectorAll('.nav-item[data-section]').forEach(item=>{
     document.getElementById(`section-${sec}`).classList.add('active');
     const titles={calendario:'Prenotazione Macchinari',notifiche:'Notifiche Prenotazioni','mie-richieste':'Notifiche',utenti:'Gestione Utenti',segnala:'Segnala un problema',segnalazioni:'Segnalazioni',statistiche:'Statistiche',attrezzature:'Linee guida macchine/strumenti'};
     document.getElementById('topbar-title').textContent=titles[sec]||sec;
-    if(sec==='notifiche'){renderNotifications();document.getElementById('new-btn').style.display='none';}
-    else if(sec==='segnalazioni'){renderIssues();document.getElementById('new-btn').style.display='none';}
+    if(sec==='segnalazioni'){renderIssues();document.getElementById('new-btn').style.display='none';}
     else if(sec==='mie-richieste'){renderMyRequests();document.getElementById('new-btn').style.display='none';}
     else if(sec==='utenti'){renderUsers();document.getElementById('new-btn').style.display='none';}
     else if(sec==='segnala'){document.getElementById('new-btn').style.display='none';}
@@ -1514,29 +1360,35 @@ document.getElementById('modal-save').addEventListener('click',async()=>{
 
   const reqId=`req_${Date.now()}_${Math.random().toString(36).substr(2,6)}`;
   const collaborators=getSelectedCollaborators();
+  const ym=`${new Date(date+'T12:00:00').getFullYear()}-${new Date(date+'T12:00:00').getMonth()}`;
 
-  if(isAdmin){
-    // Admin prenota direttamente senza approvazione
-    const ym=`${new Date(date+'T12:00:00').getFullYear()}-${new Date(date+'T12:00:00').getMonth()}`;
-    const bkData=await fbGet(`bookings/${ym}`)||{};
-    if(!bkData[date])bkData[date]=[];
-    bkData[date].push({machine,timeStart,timeEnd,note,user:currentUser,collaborators,reqId,ts:Date.now()});
-    await fbSet(`bookings/${ym}`,bkData);
-    const d=new Date(date+'T12:00:00');
-    if(d.getFullYear()===viewYear&&d.getMonth()===viewMonth)await loadBookings();
-    selectedDate=date;renderCal();if(selectedDate)renderDetail(selectedDate);
-    if(collaborators&&collaborators.length>0)await writeCollabNotifs(reqId,{machine,date,timeStart,timeEnd,note,user:currentUser,collaborators});
-    showToast('Prenotazione aggiunta','success');
-  }else{
-    // Utente normale: invia richiesta
-    const req={machine,date,timeStart,timeEnd,note,user:currentUser,collaborators,ts:Date.now(),status:'pending'};
-    await fbPatch('requests',{[reqId]:req});
-    allRequests[reqId]=req;
-    updatePendingBadge();
-    if(selectedDate===date)renderDetail(date);
-    sendTelegramNotification(reqId,req);
-    showToast('Richiesta inviata — in attesa di approvazione');
+  // Verifica conflitti su Firebase (dati freschi)
+  const bkData=await fbGet(`bookings/${ym}`)||{};
+  const dayBk=bkData[date]||[];
+  const conflict=dayBk.find(b=>b.machine===machine&&b.timeStart<timeEnd&&b.timeEnd>timeStart);
+  if(conflict){
+    showToast(`${getMachineByID(machine).name} già prenotata da ${conflict.user} (${conflict.timeStart}–${conflict.timeEnd})`,'error');
+    return;
   }
+
+  // Nessun conflitto → prenota direttamente
+  if(!bkData[date])bkData[date]=[];
+  bkData[date].push({machine,timeStart,timeEnd,note,user:currentUser,collaborators,reqId,ts:Date.now()});
+  await fbSet(`bookings/${ym}`,bkData);
+
+  // Salva record in requests per storico/notifiche
+  const req={machine,date,timeStart,timeEnd,note,user:currentUser,collaborators,ts:Date.now(),status:'approved'};
+  await fbPatch('requests',{[reqId]:req});
+  allRequests[reqId]=req;
+
+  // Notifiche collaboratori
+  if(collaborators&&collaborators.length>0)await writeCollabNotifs(reqId,req);
+
+  // Aggiorna calendario
+  const d=new Date(date+'T12:00:00');
+  if(d.getFullYear()===viewYear&&d.getMonth()===viewMonth)await loadBookings();
+  selectedDate=date;renderCal();if(selectedDate)renderDetail(selectedDate);
+  showToast('Prenotazione confermata','success');
   document.getElementById('modal').style.display='none';
 });
 
@@ -1551,7 +1403,7 @@ document.getElementById('new-btn').addEventListener('click',()=>{
   resetCollabSelect();
   const d=document.getElementById('f-date').value.split('-');
   if(d.length===3)document.getElementById('modal-sub').textContent=
-    isAdmin?`${parseInt(d[2])} ${MONTHS_IT[parseInt(d[1])-1]} ${d[0]}`:`Richiesta per ${parseInt(d[2])} ${MONTHS_IT[parseInt(d[1])-1]} ${d[0]} — verrà inviata all'amministratore`;
+    `${parseInt(d[2])} ${MONTHS_IT[parseInt(d[1])-1]} ${d[0]}`;
 });
 
 document.getElementById('today-btn').addEventListener('click',()=>{
@@ -1759,7 +1611,6 @@ function setUser(name,admin){
   avatar.className='user-avatar'+(admin?' admin':'');
   document.getElementById('user-name-disp').textContent=admin?'Admin':name;
   document.getElementById('change-user-btn').textContent='esci';
-  document.getElementById('notif-nav').style.display=admin?'flex':'none';
   document.getElementById('users-nav').style.display=admin?'flex':'none';
   document.getElementById('segnalazioni-nav').style.display=admin?'flex':'none';
   document.getElementById('mie-richieste-nav').style.display=admin?'none':'flex';
@@ -1777,7 +1628,6 @@ document.getElementById('change-user-btn').addEventListener('click',()=>{
   document.getElementById('user-avatar').textContent='?';
   document.getElementById('user-avatar').className='user-avatar';
   document.getElementById('user-name-disp').textContent='—';
-  document.getElementById('notif-nav').style.display='none';
   document.getElementById('users-nav').style.display='none';
   document.getElementById('segnalazioni-nav').style.display='none';
   document.getElementById('mie-richieste-nav').style.display='none';
@@ -1789,80 +1639,6 @@ function showToast(msg,type=''){
   const t=document.getElementById('toast');
   t.textContent=msg;t.className='toast'+(type?` ${type}`:'');
   t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);
-}
-
-// TELEGRAM
-const TG_TOKEN='8657579171:AAHNE81TSBdhDBfLWpZPnCiNWnBHWAQFmVc';
-const TG_CHAT='232747333';
-const PORTAL_URL='https://simoneamantia97-spec.github.io/lab-portal';
-
-async function sendTelegramNotification(reqId,req){
-  const machine=getMachineByID(req.machine);
-  const dateParts=req.date.split('-');
-  const dateStr=`${parseInt(dateParts[2])} ${MONTHS_IT[parseInt(dateParts[1])-1]} ${dateParts[0]}`;
-  const ym=`${new Date(req.date+'T12:00:00').getFullYear()}-${new Date(req.date+'T12:00:00').getMonth()}`;
-  const bkData=await fbGet(`bookings/${ym}`)||{};
-  const dayBk=(bkData[req.date]||[]).filter(b=>b.machine===req.machine&&b.timeStart<req.timeEnd&&b.timeEnd>req.timeStart);
-  let conflictText='';
-  if(dayBk.length>0){conflictText='\n\n⚠️ *CONFLITTI RILEVATI* per la stessa macchina:\n'+dayBk.map(b=>`• ${b.user}: ${b.timeStart}–${b.timeEnd}`).join('\n');}
-  const noteText=req.note?`\n📝 Note: _${req.note}_`:'';
-  const text=`🔔 *Nuova richiesta di prenotazione*\n\n👤 Utente: *${req.user}*\n🔧 Macchina: *${machine.name}*\n📅 Data: *${dateStr}*\n🕐 Orario: *${req.timeStart} – ${req.timeEnd}*${noteText}${conflictText}`;
-  const approveUrl=`${PORTAL_URL}?action=approve&id=${reqId}`;
-  const rejectUrl=`${PORTAL_URL}?action=reject&id=${reqId}`;
-  const body={
-    chat_id:TG_CHAT,text,parse_mode:'Markdown',
-    reply_markup:{inline_keyboard:[[{text:'✅ Approva',url:approveUrl},{text:'❌ Rifiuta',url:rejectUrl}]]}
-  };
-  try{
-    const res=await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
-      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)
-    });
-    const json=await res.json();
-    if(!json.ok)console.error('Telegram API error:',json.description);
-  }catch(e){console.error('Telegram fetch error:',e);}
-}
-
-// URL ACTION HANDLER (approva/rifiuta da link Telegram)
-async function handleUrlAction(){
-  const params=new URLSearchParams(window.location.search);
-  const action=params.get('action');
-  const id=params.get('id');
-  if(!action||!id)return;
-  // Clean URL
-  window.history.replaceState({},'',window.location.pathname);
-  // Show overlay
-  const overlay=document.createElement('div');
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(15,22,35,.7);display:flex;align-items:center;justify-content:center;z-index:300;backdrop-filter:blur(4px)';
-  const box=document.createElement('div');
-  box.style.cssText='background:white;border-radius:16px;padding:32px 40px;text-align:center;max-width:360px;width:90%';
-  box.innerHTML='<div style="font-size:32px;margin-bottom:12px">⏳</div><div style="font-size:16px;font-weight:600;color:#1a2234">Elaborazione in corso...</div>';
-  overlay.appendChild(box);document.body.appendChild(overlay);
-  try{
-    const req=await fbGet(`requests/${id}`);
-    if(!req){box.innerHTML='<div style="font-size:32px;margin-bottom:12px">⚠️</div><div style="font-size:15px;font-weight:600;color:#1a2234">Richiesta non trovata</div><div style="font-size:13px;color:#5a6580;margin-top:8px">Potrebbe essere già stata gestita</div>';setTimeout(()=>overlay.remove(),3000);return;}
-    if(req.status!=='pending'){
-      const already=req.status==='approved'?'già approvata':'già rifiutata';
-      box.innerHTML=`<div style="font-size:32px;margin-bottom:12px">ℹ️</div><div style="font-size:15px;font-weight:600;color:#1a2234">Richiesta ${already}</div>`;
-      setTimeout(()=>overlay.remove(),3000);return;
-    }
-    const machine=getMachineByID(req.machine);
-    const dateParts=req.date.split('-');
-    const dateStr=`${parseInt(dateParts[2])} ${MONTHS_IT[parseInt(dateParts[1])-1]} ${dateParts[0]}`;
-    if(action==='approve'){
-      const ym=`${new Date(req.date+'T12:00:00').getFullYear()}-${new Date(req.date+'T12:00:00').getMonth()}`;
-      const bkData=await fbGet(`bookings/${ym}`)||{};
-      if(!bkData[req.date])bkData[req.date]=[];
-      bkData[req.date].push({machine:req.machine,timeStart:req.timeStart,timeEnd:req.timeEnd,note:req.note,user:req.user,collaborators:req.collaborators||[],reqId:id,ts:Date.now()});
-      await fbSet(`bookings/${ym}`,bkData);
-      await fbPatch(`requests/${id}`,{status:'approved'});
-      if(req.collaborators&&req.collaborators.length>0)await writeCollabNotifs(id,req);
-      box.innerHTML=`<div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:16px;font-weight:600;color:#16a05a">Prenotazione approvata</div><div style="font-size:13px;color:#5a6580;margin-top:8px">${req.user} — ${machine.name}<br>${dateStr}, ${req.timeStart}–${req.timeEnd}</div>`;
-    }else{
-      await fbPatch(`requests/${id}`,{status:'rejected'});
-      box.innerHTML=`<div style="font-size:40px;margin-bottom:12px">❌</div><div style="font-size:16px;font-weight:600;color:#e05555">Prenotazione rifiutata</div><div style="font-size:13px;color:#5a6580;margin-top:8px">${req.user} — ${machine.name}<br>${dateStr}</div>`;
-    }
-    box.innerHTML+=`<button onclick="this.closest('div[style]').remove()" style="margin-top:20px;padding:8px 24px;background:#4f8ef7;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer">Chiudi</button>`;
-  }catch(e){box.innerHTML='<div style="font-size:32px;margin-bottom:12px">⚠️</div><div style="font-size:15px;color:#e05555">Errore di connessione</div>';setTimeout(()=>overlay.remove(),3000);}
 }
 
 // ─── LINEE GUIDA MACCHINE ──────────────────────────────────────────────────
@@ -2268,7 +2044,6 @@ function hideCalTooltip(){
 }
 
 // ─── URL ACTION HANDLER ─────────────────────────────────────────────────────
-handleUrlAction();
 renderLegend();
 populateMachineSelect();
 selectedDate=today();

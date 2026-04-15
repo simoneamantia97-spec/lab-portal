@@ -1520,7 +1520,7 @@ const LANG={
     days:['Lun','Mar','Mer','Gio','Ven','Sab','Dom'],
     detailTitleDefault:'— Seleziona un giorno',
     noBookingSelected:'Nessun giorno selezionato',
-    noBookings:T('noBookings'),
+    noBookings:'Nessuna prenotazione',
     thisMonth:'Questo mese',
     machinesLabel:'Macchinari',
     overlap:'SOVRAPPOSIZIONE',
@@ -1546,22 +1546,22 @@ const LANG={
     conflictMsg:(name,ts,te)=>`già prenotata da ${name} (${ts}–${te})`,
     bookingConfirmed:'Prenotazione confermata',
     // My requests
-    noRequestsSent:T('noRequestsSent'),
-    requestsWillAppear:T('requestsWillAppear'),
-    collabInviteBadge:T('collabInviteBadge'),
+    noRequestsSent:'Nessuna richiesta inviata',
+    requestsWillAppear:'Le tue prenotazioni appariranno qui',
+    collabInviteBadge:'Invito collaborazione',
     chipDate:'Data:',
     chipTime:'Orario:',
     bookedOn:'Prenotata il',
-    visibleCalendar:T('visibleCalendar'),
+    visibleCalendar:'✓ Visibile nel calendario',
     btnDelete:'Elimina',
     confirmed:'Confermata',
     rsvpAccept:'✓ Accetta',
     rsvpDecline:'✕ Rifiuta',
-    rsvpAccepted:T('rsvpAccepted'),
-    rsvpDeclined:T('rsvpDeclined'),
-    collabConfirmed:T('collabConfirmed'),
-    collabDeclined:T('collabDeclined'),
-    collabAddedNote:'${T('collabAddedNote')}',
+    rsvpAccepted:'✓ Hai accettato',
+    rsvpDeclined:'✕ Hai rifiutato',
+    collabConfirmed:'Partecipazione confermata',
+    collabDeclined:'Partecipazione rifiutata',
+    collabAddedNote:'📋 Sei stato aggiunto come collaboratore a questa sessione',
     // Report
     reportMachineLabel:'Macchinario',
     reportDescLabel:'Descrizione del problema',
@@ -1571,22 +1571,22 @@ const LANG={
     reportEnterDesc:'Inserisci la descrizione del problema',
     reportSent:'Segnalazione inviata',
     // Issues (admin)
-    noIssues:T('noIssues'),
+    noIssues:'Nessuna segnalazione',
     issueFrom:'Segnalato da',
-    issueOpen:T('issueOpen'),
-    issueResolved:T('issueResolved'),
+    issueOpen:'Aperta',
+    issueResolved:'Risolta',
     btnResolve:'✓ Risolvi',
     btnDeleteIssue:'🗑 Elimina',
     issueResolvedToast:'Segnalazione risolta',
     issueDeletedToast:'Segnalazione eliminata',
     // Stats
-    statsLoading:T('statsLoading'),
-    statsNoData:T('statsNoData'),
-    statsNoBookings:T('statsNoBookings'),
+    statsLoading:'Caricamento dati...',
+    statsNoData:'Nessun dato disponibile',
+    statsNoBookings:'Nessuna prenotazione approvata ancora',
     statsIssuesPerUser:'Segnalazioni per utente',
     // Users (admin)
     accountActive:'Account attivo',
-    noAccessYet:'${T('noAccessYet')}',
+    noAccessYet:'Nessun accesso ancora effettuato',
     btnResetPwd:'Reset password',
     btnDeleteAccount:'Elimina account',
     confirmResetPwd:(n)=>`Resettare la password di ${n}? Al prossimo accesso dovrà impostarne una nuova.`,
@@ -1594,13 +1594,13 @@ const LANG={
     pwdResetToast:(n)=>`Password di ${n} resettata`,
     accountDeletedToast:(n)=>`Account di ${n} eliminato`,
     // Booking toasts
-    selectDate:T('selectDate'),
-    enterTime:T('enterTime'),
+    selectDate:'Seleziona una data',
+    enterTime:'Inserisci orario',
     // Guide section labels
     dpiRequired:'DPI richiesti',
     operativeProcedure:'Procedura operativa',
     operativeNotes:'Note operative',
-    backToMachines:T('backToMachines'),
+    backToMachines:'← Torna alle macchine',
   },
   en:{
     // Login
@@ -1842,7 +1842,7 @@ function applyLang(){
   const timeErr=document.getElementById('time-error');
   if(timeErr)timeErr.textContent=T('timeError');
   const collabTrigger=document.getElementById('collab-trigger');
-  if(collabTrigger&&(collabTrigger.textContent==='Seleziona collaboratori...'||collabTrigger.textContent==='Select collaborators...'))
+  if(collabTrigger&&(collabTrigger.textContent==='Seleziona collaboratori...'||collabTrigger.textContent==='Select collaborators...'||selectedCollaborators.length===0))
     collabTrigger.textContent=T('collabPlaceholder');
   setPlaceholder('segnala-desc',T('reportDescPlaceholder'));
   const segnalaBtn=document.getElementById('segnala-submit');
@@ -1852,13 +1852,8 @@ function applyLang(){
   set('segnala-desc-label',T('reportDescLabel'));
   const segnalaPh=document.getElementById('segnala-machine-placeholder');
   if(segnalaPh)segnalaPh.textContent=`— ${T('reportSelectMachine')} —`;
-  // Stats header
   const statsBarH=document.querySelector('#stats-bar-container .panel-card h4');
   if(statsBarH)statsBarH.textContent=T('statsIssuesPerUser');
-  // Collab trigger reset if untouched
-  const collabTrigger=document.getElementById('collab-trigger');
-  if(collabTrigger&&selectedCollaborators.length===0)
-    collabTrigger.textContent=T('collabPlaceholder');
   // Update topbar title if section is open
   if(currentSection){
     const titles={calendario:T('titleCalendar'),'mie-richieste':T('titleMyRequests'),utenti:T('titleUsers'),segnala:T('titleReport'),segnalazioni:T('titleIssues'),statistiche:T('titleStats'),attrezzature:T('titleGuides')};

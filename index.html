@@ -568,19 +568,21 @@ const ADMIN_PASS='LAB-TM';
 const MACHINE_GROUPS=[
   {
     label:'Parco Macchine',
+    labelEn:'Equipment',
     machines:[
       {id:'esab',name:'ESAB',color:0},
       {id:'galdabini',name:'Galdabini',color:1},
-      {id:'pressa',name:'Pressa meccanica industriale',color:2},
+      {id:'pressa',name:'Pressa meccanica industriale',nameEn:'Industrial mechanical press',color:2},
     ]
   },
   {
     label:'Laboratorio Metallografico',
+    labelEn:'Metallographic Laboratory',
     machines:[
-      {id:'polishing',name:'Polishing automatico',color:3},
+      {id:'polishing',name:'Polishing automatico',nameEn:'Automatic Polishing',color:3},
       {id:'sem',name:'SEM',color:4},
-      {id:'om',name:'Optical Microscope',color:5},
-      {id:'hardness',name:'Hardness machine',color:6},
+      {id:'om',name:'Microscopio ottico',nameEn:'Optical microscope',color:5},
+      {id:'hardness',name:'Macchina di durezza automatica',nameEn:'Automatic hardness machine',color:6},
     ]
   }
 ];
@@ -603,6 +605,8 @@ let currentSection='calendario';
 function dateKey(y,m,d){return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`}
 function today(){const n=new Date();return dateKey(n.getFullYear(),n.getMonth(),n.getDate())}
 function getMachineByID(id){return MACHINES.find(m=>m.id===id)||MACHINES[0]}
+function machineName(m){return (currentLang==='en'&&m.nameEn)?m.nameEn:m.name;}
+function machineGroupLabel(g){return (currentLang==='en'&&g.labelEn)?g.labelEn:g.label;}
 function colorClass(idx){return `m${idx%7}`}
 
 // FIREBASE
@@ -766,7 +770,7 @@ function renderWeekView(){
     const eventsHtml=dayBk.map(b=>{
       const m=getMachineByID(b.machine);
       const bg=['#4f8ef7','#3dd68c','#f0a030','#e05555','#a78bfa','#06b6d4','#f472b6'][m.color%7];
-      return `<div class="week-event" style="background:${bg}" data-key="${key}">${m.name}<br><span style="font-size:10px;opacity:.85">${b.timeStart}–${b.timeEnd}</span></div>`;
+      return `<div class="week-event" style="background:${bg}" data-key="${key}">${machineName(m)}<br><span style="font-size:10px;opacity:.85">${b.timeStart}–${b.timeEnd}</span></div>`;
     }).join('');
     return `<div class="week-col${isToday?' today-col':''}">
       <div class="week-col-header" data-key="${key}">${dayNames[i]}<br><span style="font-size:13px;font-family:'IBM Plex Mono',monospace">${d.getDate()}</span></div>
@@ -830,7 +834,7 @@ function renderDayView(){
     const showUser=heightPx>36;
     eventsHtml+=`<div style="position:absolute;top:${topPx}px;left:${LABEL_W+6}px;right:6px;height:${heightPx}px;
       background:${bg};border-radius:7px;padding:5px 8px;box-sizing:border-box;overflow:hidden;cursor:pointer;color:#fff">
-      <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name}</div>
+      <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${machineName(m)}</div>
       ${showUser?`<div style="font-size:11px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.user}</div>`:''}
       <div style="font-size:10px;opacity:.8;font-family:'IBM Plex Mono',monospace">${b.timeStart}–${b.timeEnd}</div>
     </div>`;
@@ -857,7 +861,7 @@ function renderDetail(key){
     return `<div class="booking-item">
       <div class="booking-color ${colorClass(machine.color)}"></div>
       <div class="booking-info">
-        <div class="booking-machine">${machine.name}${overlap?` <span style="font-size:10px;background:#fff0f0;color:var(--red);padding:1px 6px;border-radius:4px;font-weight:600">${T('overlap')}</span>`:''}</div>
+        <div class="booking-machine">${machineName(machine)}${overlap?` <span style="font-size:10px;background:#fff0f0;color:var(--red);padding:1px 6px;border-radius:4px;font-weight:600">${T('overlap')}</span>`:''}</div>
         <div class="booking-user">${b.user}</div>
         <div class="booking-time">${timeStr}</div>
         ${b.note?`<div class="booking-note">${b.note}</div>`:''}
@@ -906,7 +910,7 @@ function updateStats(){
   allItems.forEach(b=>{if(b.machine in count)count[b.machine]++;});
   const stats=document.getElementById('stats');
   const rows=MACHINES.filter(m=>count[m.id]>0).map(m=>
-    `<div class="stat-row"><span class="stat-label">${m.name}</span><span class="stat-val">${count[m.id]}</span></div>`
+    `<div class="stat-row"><span class="stat-label">${machineName(m)}</span><span class="stat-val">${count[m.id]}</span></div>`
   ).join('');
   stats.innerHTML=rows||'<div style="font-size:12px;color:var(--text-gray);text-align:center;padding:8px 0">Nessuna prenotazione</div>';
 }
@@ -918,14 +922,14 @@ function renderLegend(){
         <span style="font-size:10px">&#9660;</span>${g.label}
       </summary>
       <div style="margin-top:6px;padding-left:4px">
-        ${g.machines.map(m=>`<div class="legend-item"><div class="legend-dot ${colorClass(m.color)}"></div>${m.name}</div>`).join('')}
+        ${g.machines.map(m=>`<div class="legend-item"><div class="legend-dot ${colorClass(m.color)}"></div>${machineName(m)}</div>`).join('')}
       </div>
     </details>`).join('');
 }
 
 function populateMachineSelect(){
   document.getElementById('f-machine').innerHTML=MACHINE_GROUPS.map(g=>
-    `<optgroup label="${g.label}">${g.machines.map(m=>`<option value="${m.id}">${m.name}</option>`).join('')}</optgroup>`
+    `<optgroup label="${machineGroupLabel(g)}">${g.machines.map(m=>`<option value="${m.id}">${machineName(m)}</option>`).join('')}</optgroup>`
   ).join('');
 }
 
@@ -966,7 +970,7 @@ function renderMyRequests(){
       <div class="collab-invite-badge">Invito collaborazione</div>
       <div class="notif-header" style="margin-bottom:10px">
         <div>
-          <div class="notif-machine">${machine.name}</div>
+          <div class="notif-machine">${machineName(machine)}</div>
           <div class="notif-meta">Richiesta da <strong>${n.requester}></strong> — ${tsStr}</div>
         </div>
         <span class="status-badge status-approved">Approvata</span>
@@ -993,7 +997,7 @@ function renderMyRequests(){
     return `<div class="notif-card" style="border-left:4px solid #a8e6cc">
       <div class="notif-header">
         <div>
-          <div class="notif-machine">${machine.name}</div>
+          <div class="notif-machine">${machineName(machine)}</div>
           <div class="notif-meta">${T('bookedOn')} ${tsStr}</div>
         </div>
         <span class="status-badge status-approved">${T('confirmed')}</span>
@@ -1129,7 +1133,7 @@ async function renderStats(){
       const card=document.createElement('div');
       card.className='panel-card';
       card.style.minWidth='0';
-      card.innerHTML=`<h4 style="margin-bottom:12px">${machine.name}</h4><canvas id="pie-${machine.id}" style="max-height:200px"></canvas>`;
+      card.innerHTML=`<h4 style="margin-bottom:12px">${machineName(machine)}</h4><canvas id="pie-${machine.id}" style="max-height:200px"></canvas>`;
       container.appendChild(card);
       const ctx=document.getElementById(`pie-${machine.id}`).getContext('2d');
       const chart=new Chart(ctx,{
@@ -1181,7 +1185,7 @@ function populateSegnalaMachine(){
   const sel=document.getElementById('segnala-machine');
   if(!sel)return;
   sel.innerHTML=`<option value="">— ${T('reportSelectMachine')} —</option>`+
-    MACHINE_GROUPS.map(g=>`<optgroup label="${g.label}">${g.machines.map(m=>`<option value="${m.id}">${m.name}</option>`).join('')}</optgroup>`).join('');
+    MACHINE_GROUPS.map(g=>`<optgroup label="${machineGroupLabel(g)}">${g.machines.map(m=>`<option value="${m.id}">${machineName(m)}</option>`).join('')}</optgroup>`).join('');
 }
 
 document.addEventListener('change',e=>{
@@ -1240,7 +1244,7 @@ function renderIssues(){
     return `<div class="notif-card" style="border-left:4px solid ${isResolved?'#a8e6cc':'var(--amber)'}">
       <div class="notif-header">
         <div>
-          <div class="notif-machine">🔧 ${machine.name}</div>
+          <div class="notif-machine">🔧 ${machineName(machine)}</div>
           <div class="notif-meta">${T('issueFrom')} <strong>${issue.user}></strong> — ${tsStr}</div>
         </div>
         <span class="status-badge ${isResolved?'status-approved':'status-pending'}">${isResolved?T('issueResolved'):T('issueOpen')}</span>
@@ -1376,14 +1380,14 @@ document.getElementById('modal-save').addEventListener('click',async()=>{
   // 1. Stessa macchina già prenotata da qualcun altro
   const conflict=dayBk.find(b=>b.machine===machine&&b.timeStart<timeEnd&&b.timeEnd>timeStart);
   if(conflict){
-    showToast(`${getMachineByID(machine).name} ${T('conflictMsg')(conflict.user,conflict.timeStart,conflict.timeEnd)}`,'error');
+    showToast(`${machineName(getMachineByID(machine))} ${T('conflictMsg')(conflict.user,conflict.timeStart,conflict.timeEnd)}`,'error');
     return;
   }
 
   // 2. L'utente ha già un'altra prenotazione sovrapposta nello stesso orario
   const userConflict=dayBk.find(b=>b.user===currentUser&&b.timeStart<timeEnd&&b.timeEnd>timeStart);
   if(userConflict){
-    const conflictMachineName=getMachineByID(userConflict.machine).name;
+    const conflictMachineName=machineName(getMachineByID(userConflict.machine));
     showToast(currentLang==='en'
       ?`You already have a booking on ${conflictMachineName} (${userConflict.timeStart}–${userConflict.timeEnd})`
       :`Hai già una prenotazione su ${conflictMachineName} (${userConflict.timeStart}–${userConflict.timeEnd})`
@@ -2194,7 +2198,7 @@ const MACHINE_GUIDES={
     notes:'Registrare ogni utilizzo nel logbook della macchina con data, operatore, materiale e numero di cicli eseguiti.'
   },
   polishing:{
-    name:'Polishing automatico',group:'Laboratorio Metallografico',
+    name:'Polishing automatico',nameEn:'Automatic Polishing',group:'Laboratorio Metallografico',
     warning:'Prestare attenzione alla rotazione dei dischi. Non abbandonare il campione durante la lucidatura senza inserire il blocco meccanico.',
     dpi:['Guanti in nitrile','Occhiali di protezione','Camice da laboratorio'],
     steps:[
@@ -2227,7 +2231,7 @@ const MACHINE_GUIDES={
     notes:'Il filamento a emissione termoionica ha vita limitata (~100 h). Annotare le ore di utilizzo sul registro del SEM.'
   },
   om:{
-    name:'Optical Microscope',group:'Laboratorio Metallografico',
+    name:'Microscopio ottico',nameEn:'Optical microscope',group:'Laboratorio Metallografico',
     warning:'Non toccare le superfici ottiche delle lenti. Usare solo carta ottica e soluzioni apposite per la pulizia.',
     dpi:['Guanti in nitrile per manipolazione campioni'],
     steps:[
@@ -2243,7 +2247,7 @@ const MACHINE_GUIDES={
     notes:'Pulire gli obiettivi dopo ogni sessione con carta ottica + isopropanolo in piccole quantità. Non usare acetone. Verificare la calibrazione della scala digitale con un vetrino micrometrico certificato.'
   },
   hardness:{
-    name:'Hardness machine',subtitle:'Struers Duramin-40',group:'Laboratorio Metallografico',
+    name:'Macchina di durezza automatica',nameEn:'Automatic hardness machine',subtitle:'Struers Duramin-40',group:'Laboratorio Metallografico',
     warning:'Non cambiare l\'indentatore con la macchina sotto carico. Verificare che il campione sia stabile e piano prima di avviare la misura.',
     dpi:['Occhiali di protezione','Guanti in nitrile'],
     steps:[
@@ -2276,8 +2280,8 @@ function renderMachineCards(){
       card.innerHTML=`
         <div class="machine-card-img">${svgForMachine(m.id)}</div>
         <div class="machine-card-body">
-          <div class="machine-card-group">${group.label}</div>
-          <div class="machine-card-name">${m.name}</div>
+          <div class="machine-card-group">${machineGroupLabel(group)}</div>
+          <div class="machine-card-name">${machineName(m)}</div>
           ${(()=>{const g=MACHINE_GUIDES[m.id];return g&&g.subtitle?`<div style="font-size:11px;color:var(--text-gray);margin-top:2px;font-family:'IBM Plex Mono',monospace">${g.subtitle}</div>`:''})()}
           <div class="machine-card-arrow">Apri guida →</div>
         </div>`;
@@ -2300,7 +2304,7 @@ function renderMachineDetail(machineId){
     <div class="guide-header">
       <div class="guide-header-icon">${svgForMachine(machineId)}</div>
       <div>
-        <div class="guide-title">${guide.name}</div>
+        <div class="guide-title">${machineName({name:guide.name,nameEn:guide.nameEn||guide.name})}</div>
         ${guide.subtitle?`<div style="font-size:12px;color:var(--text-gray);font-family:'IBM Plex Mono',monospace;margin-top:2px">${guide.subtitle}</div>`:''}
         <div class="guide-group">${guide.group}</div>
       </div>
@@ -2326,7 +2330,7 @@ async function writeCollabNotifs(reqId, req){
   if(!req.collaborators||req.collaborators.length===0)return;
   const machine=getMachineByID(req.machine);
   const notif={
-    machine:req.machine,machineName:machine.name,
+    machine:req.machine,machineName:machineName(machine),
     date:req.date,timeStart:req.timeStart,timeEnd:req.timeEnd,
     note:req.note||'',requester:req.user,ts:Date.now(),status:'pending'
   };
@@ -2457,7 +2461,7 @@ function showCalTooltip(e, dayBk){
     return `<div class="cal-tooltip-item">
       <div class="cal-tooltip-dot" style="background:${color}"></div>
       <div>
-        <div class="cal-tooltip-machine">${m.name}</div>
+        <div class="cal-tooltip-machine">${machineName(m)}</div>
         <div class="cal-tooltip-user">${b.user}</div>
         <div class="cal-tooltip-time">${b.timeStart} – ${b.timeEnd}</div>
       </div>

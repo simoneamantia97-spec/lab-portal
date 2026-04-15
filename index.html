@@ -374,15 +374,15 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
     <div class="section" id="section-segnala">
       <div class="notif-section" style="max-width:600px">
         <div class="panel-card" style="margin-bottom:0">
-          <h4 style="margin-bottom:18px">Segnala un problema</h4>
+          <h4 id="segnala-title" style="margin-bottom:18px">Segnala un problema</h4>
           <div class="field">
-            <label>Macchinario</label>
+            <label id="segnala-machine-label">Macchinario</label>
             <select id="segnala-machine">
-              <option value="">— Seleziona il macchinario —</option>
+              <option value="" id="segnala-machine-placeholder">— Seleziona il macchinario —</option>
             </select>
           </div>
           <div class="field" id="segnala-desc-field" style="display:none">
-            <label>Descrizione del problema</label>
+            <label id="segnala-desc-label">Descrizione del problema</label>
             <textarea id="segnala-desc" placeholder="Descrivi il problema riscontrato..." style="min-height:120px"></textarea>
           </div>
           <div id="segnala-actions" style="display:none">
@@ -429,7 +429,7 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
 <!-- MODAL PRENOTAZIONE -->
 <div class="modal-overlay" id="modal" style="display:none">
   <div class="modal">
-    <h3>Nuova Prenotazione</h3>
+    <h3 id="modal-title">Nuova Prenotazione</h3>
     <p class="modal-sub" id="modal-sub">La prenotazione verrà confermata se la fascia oraria è libera</p>
     <div class="field">
       <label>Macchinario</label>
@@ -476,12 +476,15 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
 <!-- MODAL LOGIN -->
 <div class="modal-overlay" id="user-modal" style="display:none">
   <div class="modal">
-    <h3 id="login-title">Accedi al Lab Portal</h3>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
+      <h3 id="login-title">Accedi al Lab Portal</h3>
+      <button id="lang-toggle" onclick="toggleLang()" style="background:#f5f7fc;border:1px solid #dde2ef;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;color:var(--text-gray);font-family:'IBM Plex Mono',monospace;flex-shrink:0;margin-left:12px;margin-top:2px">ENG</button>
+    </div>
     <p class="modal-sub" id="login-sub">Seleziona il tuo nome per continuare</p>
     <div class="field">
-      <label>Seleziona utente</label>
+      <label id="lbl-select-user">Seleziona utente</label>
       <select id="f-username">
-        <option value="">— Seleziona il tuo nome —</option>
+        <option value="" id="opt-placeholder">— Seleziona il tuo nome —</option>
         <option value="Simone Amantia">Simone Amantia</option>
         <option value="Davide Campanella">Davide Campanella</option>
         <option value="Riccardo Puleo">Riccardo Puleo</option>
@@ -495,52 +498,52 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
         <option value="Maria Gloria Trapani">Maria Gloria Trapani</option>
         <option value="Manuela Caspio">Manuela Caspio</option>
         <option value="AMMINISTRATORE">Amministratore</option>
-        <option value="__nuovo__">— Nuovo utente —</option>
+        <option value="__nuovo__" id="opt-new-user">— Nuovo utente —</option>
       </select>
     </div>
     <!-- Mostrato solo per admin -->
     <div class="field" id="admin-pwd-field" style="display:none">
-      <label>Password amministratore</label>
+      <label id="lbl-admin-pwd">Password amministratore</label>
       <input type="password" id="f-admin-password" placeholder="••••••••" autocomplete="off">
     </div>
     <!-- Mostrato per utenti con password già impostata -->
     <div class="field" id="user-pwd-field" style="display:none">
-      <label>Password</label>
+      <label id="lbl-pwd">Password</label>
       <input type="password" id="f-password" placeholder="••••••••" autocomplete="off">
     </div>
     <!-- Mostrato per primo accesso utente -->
     <div id="first-access-fields" style="display:none">
-      <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:14px">
+      <div id="first-access-banner" style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:14px">
         È il tuo primo accesso — imposta una password personale
       </div>
       <div class="field">
-        <label>Crea password</label>
+        <label id="lbl-create-pwd">Crea password</label>
         <input type="password" id="f-new-password" placeholder="Almeno 4 caratteri" autocomplete="off">
       </div>
       <div class="field">
-        <label>Conferma password</label>
+        <label id="lbl-confirm-pwd">Conferma password</label>
         <input type="password" id="f-confirm-password" placeholder="Ripeti la password" autocomplete="off">
       </div>
     </div>
     <!-- Mostrato per nuovo utente -->
     <div id="new-user-fields" style="display:none">
-      <div style="background:#eef4ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;font-size:12px;color:#1e40af;margin-bottom:14px">
+      <div id="new-user-banner" style="background:#eef4ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;font-size:12px;color:#1e40af;margin-bottom:14px">
         Registrazione nuovo utente
       </div>
       <div class="field">
-        <label>Nome</label>
+        <label id="lbl-first-name">Nome</label>
         <input type="text" id="f-new-nome" placeholder="Es. Mario" maxlength="50" autocomplete="off">
       </div>
       <div class="field">
-        <label>Cognome</label>
+        <label id="lbl-last-name">Cognome</label>
         <input type="text" id="f-new-cognome" placeholder="Es. Rossi" maxlength="50" autocomplete="off">
       </div>
       <div class="field">
-        <label>Crea password</label>
+        <label id="lbl-create-pwd2">Crea password</label>
         <input type="password" id="f-new-reg-password" placeholder="Almeno 4 caratteri" autocomplete="off">
       </div>
       <div class="field">
-        <label>Conferma password</label>
+        <label id="lbl-confirm-pwd2">Conferma password</label>
         <input type="password" id="f-new-reg-confirm" placeholder="Ripeti la password" autocomplete="off">
       </div>
     </div>
@@ -581,6 +584,8 @@ const MACHINE_GROUPS=[
 ];
 const MACHINES=MACHINE_GROUPS.flatMap(g=>g.machines);
 const MONTHS_IT=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+function MONTHS(){return T('months');}
+function DAYS(){return T('days');}
 
 let viewYear=new Date().getFullYear();
 let calView='mese'; // 'mese' | 'settimana' | 'giorno'
@@ -644,7 +649,7 @@ function renderCal(){
   grid.querySelectorAll('.cal-day').forEach(e=>e.remove());
   const first=new Date(viewYear,viewMonth,1);
   let dow=first.getDay();dow=(dow===0)?6:dow-1;
-  document.getElementById('cal-title').textContent=`${MONTHS_IT[viewMonth]} ${viewYear}`;
+  document.getElementById('cal-title').textContent=`${MONTHS()[viewMonth]} ${viewYear}`;
   const daysInMonth=new Date(viewYear,viewMonth+1,0).getDate();
   const daysInPrev=new Date(viewYear,viewMonth,0).getDate();
   const todayKey=today();
@@ -744,9 +749,9 @@ function renderWeekView(){
     const d=new Date(ws);d.setDate(ws.getDate()+i);days.push(d);
   }
   const todayStr=today();
-  const dayNames=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+  const dayNames=DAYS();
   document.getElementById('cal-title').textContent=
-    `${days[0].getDate()} ${MONTHS_IT[days[0].getMonth()].substring(0,3)} – ${days[6].getDate()} ${MONTHS_IT[days[6].getMonth()].substring(0,3)} ${days[6].getFullYear()}`;
+    `${days[0].getDate()} ${MONTHS()[days[0].getMonth()].substring(0,3)} – ${days[6].getDate()} ${MONTHS()[days[6].getMonth()].substring(0,3)} ${days[6].getFullYear()}`;
 
   const container=document.getElementById('cal-week-view');
   container.style.overflowX='auto';
@@ -781,7 +786,7 @@ function renderDayView(){
   const key=selectedDate||today();
   const d=new Date(key+'T12:00:00');
   document.getElementById('cal-title').textContent=
-    `${d.getDate()} ${MONTHS_IT[d.getMonth()]} ${d.getFullYear()}`;
+    `${d.getDate()} ${MONTHS()[d.getMonth()]} ${d.getFullYear()}`;
 
   const dayBk=bookings[key]||[];
   const container=document.getElementById('cal-day-view');
@@ -835,8 +840,8 @@ function renderDayView(){
 
 function renderDetail(key){
   const parts=key.split('-');
-  document.getElementById('detail-title').textContent=`${parseInt(parts[2])} ${MONTHS_IT[parseInt(parts[1])-1]} ${parts[0]}`;
-  document.getElementById('topbar-sub').textContent=`${parseInt(parts[2])} ${MONTHS_IT[parseInt(parts[1])-1]} ${parts[0]}`;
+  document.getElementById('detail-title').textContent=`${parseInt(parts[2])} ${MONTHS()[parseInt(parts[1])-1]} ${parts[0]}`;
+  document.getElementById('topbar-sub').textContent=`${parseInt(parts[2])} ${MONTHS()[parseInt(parts[1])-1]} ${parts[0]}`;
   const list=document.getElementById('detail-list');
   const items=bookings[key]||[];
 
@@ -850,7 +855,7 @@ function renderDetail(key){
     return `<div class="booking-item">
       <div class="booking-color ${colorClass(machine.color)}"></div>
       <div class="booking-info">
-        <div class="booking-machine">${machine.name}${overlap?` <span style="font-size:10px;background:#fff0f0;color:var(--red);padding:1px 6px;border-radius:4px;font-weight:600">SOVRAPPOSIZIONE</span>`:''}</div>
+        <div class="booking-machine">${machine.name}${overlap?` <span style="font-size:10px;background:#fff0f0;color:var(--red);padding:1px 6px;border-radius:4px;font-weight:600">${T('overlap')}</span>`:''}</div>
         <div class="booking-user">${b.user}</div>
         <div class="booking-time">${timeStr}</div>
         ${b.note?`<div class="booking-note">${b.note}</div>`:''}
@@ -875,11 +880,11 @@ function renderDetail(key){
   list.querySelectorAll('.booking-del').forEach(btn=>{
     btn.addEventListener('click',async()=>{
       const k=btn.dataset.key;const idx=parseInt(btn.dataset.idx);
-      if(!bookings[k]){showToast('Errore: ricarica la pagina','error');return;}
+      if(!bookings[k]){showToast(T('errorReload'),'error');return;}
       bookings[k].splice(idx,1);
       if(bookings[k].length===0)delete bookings[k];
       await fbSet(`bookings/${viewYear}-${viewMonth}`,bookings);
-      renderCal();renderDetail(k);updateStats();showToast('Prenotazione eliminata');
+      renderCal();renderDetail(k);updateStats();showToast(T('bookingDeleted'));
     });
   });
   list.querySelectorAll('.req-cancel').forEach(btn=>{
@@ -942,17 +947,17 @@ function renderMyRequests(){
   const collabHTML=collabInvites.map(([id,n])=>{
     const machine=getMachineByID(n.machine);
     const dateParts=n.date.split('-');
-    const dateStr=`${parseInt(dateParts[2])} ${MONTHS_IT[parseInt(dateParts[1])-1]} ${dateParts[0]}`;
-    const tsStr=new Date(n.ts).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const dateStr=`${parseInt(dateParts[2])} ${MONTHS()[parseInt(dateParts[1])-1]} ${dateParts[0]}`;
+    const tsStr=new Date(n.ts).toLocaleString(currentLang==='en'?'en-GB':'it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
     const st=n.status||'pending';
     const rsvpSection=st==='pending'
       ?`<div class="rsvp-row">
-          <button class="btn-rsvp-accept collab-rsvp-btn" data-id="${id}" data-action="accepted">✓ Accetta</button>
-          <button class="btn-rsvp-decline collab-rsvp-btn" data-id="${id}" data-action="declined">✕ Rifiuta</button>
+          <button class="btn-rsvp-accept collab-rsvp-btn" data-id="${id}" data-action="accepted">${T('rsvpAccept')}</button>
+          <button class="btn-rsvp-decline collab-rsvp-btn" data-id="${id}" data-action="declined">${T('rsvpDecline')}</button>
         </div>`
       :`<div style="margin-top:10px">
           <span class="rsvp-chip ${st==='accepted'?'rsvp-accepted':'rsvp-declined'}">
-            ${st==='accepted'?'✓ Hai accettato':'✕ Hai rifiutato'}
+            ${st==='accepted'?T('rsvpAccepted'):T('rsvpDeclined')}
           </span>
         </div>`;
     return `<div class="collab-invite-card">
@@ -965,8 +970,8 @@ function renderMyRequests(){
         <span class="status-badge status-approved">Approvata</span>
       </div>
       <div class="notif-detail">
-        <div class="notif-chip"><strong>Data:</strong> ${dateStr}</div>
-        <div class="notif-chip"><strong>Orario:</strong> ${n.timeStart} – ${n.timeEnd}</div>
+        <div class="notif-chip"><strong>'+T('chipDate')+'</strong> ${dateStr}</div>
+        <div class="notif-chip"><strong>'+T('chipTime')+'</strong> ${n.timeStart} – ${n.timeEnd}</div>
       </div>
       ${n.note?`<div class="notif-note">"${n.note}"</div>`:''}
       ${rsvpSection}
@@ -976,8 +981,8 @@ function renderMyRequests(){
   const myHTML=mine.map(([id,r])=>{
     const machine=getMachineByID(r.machine);
     const dateParts=r.date.split('-');
-    const dateStr=`${parseInt(dateParts[2])} ${MONTHS_IT[parseInt(dateParts[1])-1]} ${dateParts[0]}`;
-    const tsStr=new Date(r.ts).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const dateStr=`${parseInt(dateParts[2])} ${MONTHS()[parseInt(dateParts[1])-1]} ${dateParts[0]}`;
+    const tsStr=new Date(r.ts).toLocaleString(currentLang==='en'?'en-GB':'it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
     const statusMap={pending:{label:'In attesa',cls:'status-pending'},approved:{label:'Approvata',cls:'status-approved'},rejected:{label:'Rifiutata',cls:'status-rejected'}};
     const st=statusMap[r.status]||statusMap.pending;
     const borderColor=r.status==='approved'?'#a8e6cc':r.status==='rejected'?'#ffd0d0':'#fcd34d';
@@ -987,13 +992,13 @@ function renderMyRequests(){
       <div class="notif-header">
         <div>
           <div class="notif-machine">${machine.name}</div>
-          <div class="notif-meta">Prenotata il ${tsStr}</div>
+          <div class="notif-meta">'+T('bookedOn')+' ${tsStr}</div>
         </div>
-        <span class="status-badge status-approved">Confermata</span>
+        <span class="status-badge status-approved">${T('confirmed')}</span>
       </div>
       <div class="notif-detail">
-        <div class="notif-chip"><strong>Data:</strong> ${dateStr}</div>
-        <div class="notif-chip"><strong>Orario:</strong> ${r.timeStart} – ${r.timeEnd}</div>
+        <div class="notif-chip"><strong>'+T('chipDate')+'</strong> ${dateStr}</div>
+        <div class="notif-chip"><strong>'+T('chipTime')+'</strong> ${r.timeStart} – ${r.timeEnd}</div>
       </div>
       ${r.note?`<div class="notif-note">"${r.note}"</div>`:''}
       ${collabLine}
@@ -1030,7 +1035,7 @@ function renderMyRequests(){
         if(!allRequests[reqId].collabStatus)allRequests[reqId].collabStatus={};
         allRequests[reqId].collabStatus[userKey]=action;
       }
-      const label=action==='accepted'?'Partecipazione confermata':'Partecipazione rifiutata';
+      const label=action==='accepted'?T('collabConfirmed'):T('collabDeclined');
       const type=action==='accepted'?'success':'';
       showToast(label,type);
       renderMyRequests();
@@ -1052,7 +1057,7 @@ function renderMyRequests(){
       await fbPatch(`requests/${id}`,{status:'deleted'});
       allRequests[id].status='deleted';
       if(d.getFullYear()===viewYear&&d.getMonth()===viewMonth)await loadBookings();
-      renderMyRequests();showToast('Prenotazione eliminata');
+      renderMyRequests();showToast(T('bookingDeleted'));
     });
   });
 
@@ -1156,7 +1161,7 @@ async function renderStats(){
       type:'bar',
       data:{
         labels,
-        datasets:[{label:'Segnalazioni',data,backgroundColor:'#4f8ef7',borderRadius:6,borderSkipped:false}]
+        datasets:[{label:T('navIssues'),data,backgroundColor:'#4f8ef7',borderRadius:6,borderSkipped:false}]
       },
       options:{
         responsive:true,
@@ -1173,7 +1178,7 @@ async function renderStats(){
 function populateSegnalaMachine(){
   const sel=document.getElementById('segnala-machine');
   if(!sel)return;
-  sel.innerHTML='<option value="">— Seleziona il macchinario —</option>'+
+  sel.innerHTML=`<option value="">— ${T('reportSelectMachine')} —</option>`+
     MACHINE_GROUPS.map(g=>`<optgroup label="${g.label}">${g.machines.map(m=>`<option value="${m.id}">${m.name}</option>`).join('')}</optgroup>`).join('');
 }
 
@@ -1189,8 +1194,8 @@ document.addEventListener('click',async e=>{
   if(!e.target||e.target.id!=='segnala-submit')return;
   const machine=document.getElementById('segnala-machine').value;
   const desc=document.getElementById('segnala-desc').value.trim();
-  if(!machine){showToast('Seleziona il macchinario');return;}
-  if(!desc){showToast('Inserisci la descrizione del problema');return;}
+  if(!machine){showToast(T('reportSelectMachine'));return;}
+  if(!desc){showToast(T('reportEnterDesc'));return;}
   const issueId=`issue_${Date.now()}_${Math.random().toString(36).substr(2,6)}`;
   const issue={machine,desc,user:currentUser,ts:Date.now(),status:'open'};
   await fbPatch('issues',{[issueId]:issue});
@@ -1199,7 +1204,7 @@ document.addEventListener('click',async e=>{
   document.getElementById('segnala-desc').value='';
   document.getElementById('segnala-desc-field').style.display='none';
   document.getElementById('segnala-actions').style.display='none';
-  showToast('Segnalazione inviata','success');
+  showToast(T('reportSent'),'success');
   updateIssuesBadge();
 });
 
@@ -1228,20 +1233,20 @@ function renderIssues(){
   }
   list.innerHTML=entries.map(([id,issue])=>{
     const machine=getMachineByID(issue.machine);
-    const tsStr=new Date(issue.ts).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const tsStr=new Date(issue.ts).toLocaleString(currentLang==='en'?'en-GB':'it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
     const isResolved=issue.status==='resolved';
     return `<div class="notif-card" style="border-left:4px solid ${isResolved?'#a8e6cc':'var(--amber)'}">
       <div class="notif-header">
         <div>
           <div class="notif-machine">🔧 ${machine.name}</div>
-          <div class="notif-meta">Segnalato da <strong>${issue.user}</strong> — ${tsStr}</div>
+          <div class="notif-meta">${T('issueFrom')} <strong>${issue.user}</strong> — ${tsStr}</div>
         </div>
-        <span class="status-badge ${isResolved?'status-approved':'status-pending'}">${isResolved?'Risolta':'Aperta'}</span>
+        <span class="status-badge ${isResolved?'status-approved':'status-pending'}">${isResolved?T('issueResolved'):T('issueOpen')}</span>
       </div>
       <div class="notif-note" style="margin-bottom:12px">"${issue.desc}"</div>
       <div class="notif-actions">
-        ${!isResolved?`<button class="btn btn-approve close-issue-btn" data-id="${id}">✓ Segna come risolta</button>`:''}
-        <button class="btn btn-reject del-issue-btn" data-id="${id}" style="margin-left:auto">🗑 Elimina</button>
+        ${!isResolved?`<button class="btn btn-approve close-issue-btn" data-id="${id}">${T('btnResolve')}</button>`:''}
+        <button class="btn btn-reject del-issue-btn" data-id="${id}" style="margin-left:auto">${T('btnDeleteIssue')}</button>
       </div>
     </div>`;
   }).join('');
@@ -1252,7 +1257,7 @@ function renderIssues(){
       allIssues[id].status='resolved';
       await fbPatch(`issues/${id}`,{status:'resolved'});
       updateIssuesBadge();renderIssues();
-      showToast('Segnalazione risolta','success');
+      showToast(T('issueResolvedToast'),'success');
     });
   });
 
@@ -1262,7 +1267,7 @@ function renderIssues(){
       await fbPatch(`issues/${id}`,{status:'deleted'});
       delete allIssues[id];
       updateIssuesBadge();renderIssues();
-      showToast('Segnalazione eliminata');
+      showToast(T('issueDeletedToast'));
     });
   });
 }
@@ -1286,13 +1291,13 @@ function renderUsers(){
         <div style="font-size:14px;font-weight:500;color:var(--text-dark)">${name}</div>
         <div style="font-size:12px;margin-top:2px">
           ${hasPassword
-            ? `<span style="color:#16a05a">&#10003; Account attivo</span>`
-            : `<span style="color:var(--text-gray)">Nessun accesso ancora effettuato</span>`}
+            ? `<span style="color:#16a05a">&#10003; ${T('accountActive')}</span>`
+            : `<span style="color:var(--text-gray)">${T('noAccessYet')}</span>`}
         </div>
       </div>
       <div style="display:flex;gap:8px">
-        ${hasPassword?`<button class="btn btn-reject reset-pwd-btn" style="font-size:11px;padding:5px 12px" data-key="${pwKey}" data-name="${name}">Reset password</button>`:''}
-        <button class="btn btn-reject del-user-btn" style="font-size:11px;padding:5px 12px;background:#fff0f0" data-key="${pwKey}" data-name="${name}">Elimina account</button>
+        ${hasPassword?`<button class="btn btn-reject reset-pwd-btn" style="font-size:11px;padding:5px 12px" data-key="${pwKey}" data-name="${name}">${T('btnResetPwd')}</button>`:''}
+        <button class="btn btn-reject del-user-btn" style="font-size:11px;padding:5px 12px;background:#fff0f0" data-key="${pwKey}" data-name="${name}">${T('btnDeleteAccount')}</button>
       </div>
     </div>`;
   }).join('');
@@ -1301,22 +1306,22 @@ function renderUsers(){
   list.querySelectorAll('.reset-pwd-btn').forEach(btn=>{
     btn.addEventListener('click',async()=>{
       const key=btn.dataset.key;const name=btn.dataset.name;
-      if(!confirm(`Resettare la password di ${name}? Al prossimo accesso dovrà impostarne una nuova.`))return;
+      if(!confirm(T('confirmResetPwd')(name)))return;
       await fbPatch('passwords',{[key]:null});
       delete userPasswords[key];
       renderUsers();
-      showToast(`Password di ${name} resettata`);
+      showToast(T('pwdResetToast')(name));
     });
   });
 
   list.querySelectorAll('.del-user-btn').forEach(btn=>{
     btn.addEventListener('click',async()=>{
       const key=btn.dataset.key;const name=btn.dataset.name;
-      if(!confirm(`Eliminare l'account di ${name}? Questa operazione rimuove la password salvata.`))return;
+      if(!confirm(T('confirmDeleteUser')(name)))return;
       await fbPatch('passwords',{[key]:null});
       delete userPasswords[key];
       renderUsers();
-      showToast(`Account di ${name} eliminato`);
+      showToast(T('accountDeletedToast')(name));
     });
   });
 }
@@ -1331,7 +1336,7 @@ document.querySelectorAll('.nav-item[data-section]').forEach(item=>{
     item.classList.add('active');
     document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
     document.getElementById(`section-${sec}`).classList.add('active');
-    const titles={calendario:'Prenotazione Macchinari',notifiche:'Notifiche Prenotazioni','mie-richieste':'Notifiche',utenti:'Gestione Utenti',segnala:'Segnala un problema',segnalazioni:'Segnalazioni',statistiche:'Statistiche',attrezzature:'Linee guida macchine/strumenti'};
+    const titles={calendario:T('titleCalendar'),'mie-richieste':T('titleMyRequests'),utenti:T('titleUsers'),segnala:T('titleReport'),segnalazioni:T('titleIssues'),statistiche:T('titleStats'),attrezzature:T('titleGuides')};
     document.getElementById('topbar-title').textContent=titles[sec]||sec;
     if(sec==='segnalazioni'){renderIssues();document.getElementById('new-btn').style.display='none';}
     else if(sec==='mie-richieste'){renderMyRequests();document.getElementById('new-btn').style.display='none';}
@@ -1353,8 +1358,8 @@ document.getElementById('modal-save').addEventListener('click',async()=>{
   const timeStart=document.getElementById('f-time-start').value;
   const timeEnd=document.getElementById('f-time-end').value;
   const note=document.getElementById('f-note').value.trim();
-  if(!date){showToast('Seleziona una data');return;}
-  if(!timeStart||!timeEnd){showToast('Inserisci orario');return;}
+  if(!date){showToast(T('selectDate'));return;}
+  if(!timeStart||!timeEnd){showToast(T('enterTime'));return;}
   if(timeEnd<=timeStart){document.getElementById('time-error').style.display='block';return;}
   document.getElementById('time-error').style.display='none';
 
@@ -1367,7 +1372,7 @@ document.getElementById('modal-save').addEventListener('click',async()=>{
   const dayBk=bkData[date]||[];
   const conflict=dayBk.find(b=>b.machine===machine&&b.timeStart<timeEnd&&b.timeEnd>timeStart);
   if(conflict){
-    showToast(`${getMachineByID(machine).name} già prenotata da ${conflict.user} (${conflict.timeStart}–${conflict.timeEnd})`,'error');
+    showToast(`${getMachineByID(machine).name} ${T('conflictMsg')(conflict.user,conflict.timeStart,conflict.timeEnd)}`,'error');
     return;
   }
 
@@ -1388,7 +1393,7 @@ document.getElementById('modal-save').addEventListener('click',async()=>{
   const d=new Date(date+'T12:00:00');
   if(d.getFullYear()===viewYear&&d.getMonth()===viewMonth)await loadBookings();
   selectedDate=date;renderCal();if(selectedDate)renderDetail(selectedDate);
-  showToast('Prenotazione confermata','success');
+  showToast(T('bookingConfirmed'),'success');
   document.getElementById('modal').style.display='none';
 });
 
@@ -1403,7 +1408,7 @@ document.getElementById('new-btn').addEventListener('click',()=>{
   resetCollabSelect();
   const d=document.getElementById('f-date').value.split('-');
   if(d.length===3)document.getElementById('modal-sub').textContent=
-    `${parseInt(d[2])} ${MONTHS_IT[parseInt(d[1])-1]} ${d[0]}`;
+    `${parseInt(d[2])} ${MONTHS()[parseInt(d[1])-1]} ${d[0]}`;
 });
 
 document.getElementById('today-btn').addEventListener('click',()=>{
@@ -1443,7 +1448,440 @@ document.getElementById('next-btn').addEventListener('click',()=>{
   }
 });
 
-// LOGIN
+// ─── LANGUAGE SYSTEM ───────────────────────────────────────────────────────
+
+let currentLang=localStorage.getItem('lang')||'it';
+
+const LANG={
+  it:{
+    // Login
+    loginTitle:'Accedi al Lab Portal',
+    loginSub:'Seleziona il tuo nome per continuare',
+    selectUser:'Seleziona utente',
+    optPlaceholder:'— Seleziona il tuo nome —',
+    optNewUser:'— Nuovo utente —',
+    adminLabel:'Amministratore',
+    adminPwdLabel:'Password amministratore',
+    pwdLabel:'Password',
+    firstAccessBanner:'È il tuo primo accesso — imposta una password personale',
+    createPwd:'Crea password',
+    confirmPwd:'Conferma password',
+    newUserBanner:'Registrazione nuovo utente',
+    firstName:'Nome',
+    lastName:'Cognome',
+    btnContinue:'Continua',
+    btnLogin:'Accedi',
+    btnRegister:'Registrati',
+    btnSetPwd:'Imposta password e accedi',
+    subRegister:'Inserisci i tuoi dati per registrarti',
+    subEnterPwd:'Inserisci la tua password',
+    subFirstAccess:'Primo accesso — imposta la tua password',
+    errSelectName:'Seleziona il tuo nome',
+    errEnterName:'Inserisci il nome',
+    errEnterLastName:'Inserisci il cognome',
+    errPwdShort:'La password deve essere di almeno 4 caratteri',
+    errPwdMismatch:'Le password non coincidono',
+    errUserExists:'Questo utente esiste già',
+    errWrongPwd:'Password errata',
+    errGeneric:'Errore',
+    welcomeMsg:(n)=>`Benvenuto, ${n}!`,
+    pwdSetMsg:'Password impostata — benvenuto!',
+    placeholderMinChars:'Almeno 4 caratteri',
+    placeholderRepeat:'Ripeti la password',
+    placeholderFirstName:'Es. Mario',
+    placeholderLastName:'Es. Rossi',
+    // Sidebar
+    navSectionLabel:'Gestione',
+    navCalendar:'Calendario',
+    navUsers:'Gestione Utenti',
+    navMyRequests:'Notifiche',
+    navReport:'Segnala un problema',
+    navGuides:'Linee guida macchine/strumenti',
+    navStats:'Statistiche',
+    navIssues:'Segnalazioni',
+    btnLogout:'esci',
+    // Topbar
+    topbarSubDefault:'Seleziona un giorno per visualizzare o aggiungere prenotazioni',
+    btnNew:'+ Prenota',
+    btnToday:'Oggi',
+    viewMonth:'Mese',
+    viewWeek:'Settimana',
+    viewDay:'Giorno',
+    // Section titles
+    titleCalendar:'Prenotazione Macchinari',
+    titleMyRequests:'Notifiche',
+    titleUsers:'Gestione Utenti',
+    titleReport:'Segnala un problema',
+    titleIssues:'Segnalazioni',
+    titleStats:'Statistiche',
+    titleGuides:'Linee guida macchine/strumenti',
+    // Calendar
+    months:['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'],
+    days:['Lun','Mar','Mer','Gio','Ven','Sab','Dom'],
+    detailTitleDefault:'— Seleziona un giorno',
+    noBookingSelected:'Nessun giorno selezionato',
+    noBookings:T('noBookings'),
+    thisMonth:'Questo mese',
+    machinesLabel:'Macchinari',
+    overlap:'SOVRAPPOSIZIONE',
+    // Booking modal
+    modalTitle:'Nuova Prenotazione',
+    modalSub:'La prenotazione verrà confermata se la fascia oraria è libera',
+    fieldMachine:'Macchinario',
+    fieldDate:'Data',
+    fieldTimeSlot:'Fascia oraria',
+    fieldTimeStart:'Inizio',
+    fieldTimeEnd:'Fine',
+    fieldNotes:'Note (opzionale)',
+    fieldCollaborators:'Collaboratori (opzionale)',
+    collabPlaceholder:'Seleziona collaboratori...',
+    collabSelected:(n)=>`${n} collaborator${n>1?'i':'e'} selezionat${n>1?'i':'o'}`,
+    timeError:"L'orario di fine deve essere successivo all'inizio",
+    btnCancel:'Annulla',
+    btnBook:'Prenota',
+    // Booking detail panel
+    deleteTitle:'Elimina',
+    bookingDeleted:'Prenotazione eliminata',
+    errorReload:'Errore: ricarica la pagina',
+    conflictMsg:(name,ts,te)=>`già prenotata da ${name} (${ts}–${te})`,
+    bookingConfirmed:'Prenotazione confermata',
+    // My requests
+    noRequestsSent:T('noRequestsSent'),
+    requestsWillAppear:T('requestsWillAppear'),
+    collabInviteBadge:T('collabInviteBadge'),
+    chipDate:'Data:',
+    chipTime:'Orario:',
+    bookedOn:'Prenotata il',
+    visibleCalendar:T('visibleCalendar'),
+    btnDelete:'Elimina',
+    confirmed:'Confermata',
+    rsvpAccept:'✓ Accetta',
+    rsvpDecline:'✕ Rifiuta',
+    rsvpAccepted:T('rsvpAccepted'),
+    rsvpDeclined:T('rsvpDeclined'),
+    collabConfirmed:T('collabConfirmed'),
+    collabDeclined:T('collabDeclined'),
+    collabAddedNote:'${T('collabAddedNote')}',
+    // Report
+    reportMachineLabel:'Macchinario',
+    reportDescLabel:'Descrizione del problema',
+    reportDescPlaceholder:'Descrivi il problema riscontrato...',
+    reportSubmitBtn:'Invia segnalazione',
+    reportSelectMachine:'Seleziona il macchinario',
+    reportEnterDesc:'Inserisci la descrizione del problema',
+    reportSent:'Segnalazione inviata',
+    // Issues (admin)
+    noIssues:T('noIssues'),
+    issueFrom:'Segnalato da',
+    issueOpen:T('issueOpen'),
+    issueResolved:T('issueResolved'),
+    btnResolve:'✓ Risolvi',
+    btnDeleteIssue:'🗑 Elimina',
+    issueResolvedToast:'Segnalazione risolta',
+    issueDeletedToast:'Segnalazione eliminata',
+    // Stats
+    statsLoading:T('statsLoading'),
+    statsNoData:T('statsNoData'),
+    statsNoBookings:T('statsNoBookings'),
+    statsIssuesPerUser:'Segnalazioni per utente',
+    // Users (admin)
+    accountActive:'Account attivo',
+    noAccessYet:'${T('noAccessYet')}',
+    btnResetPwd:'Reset password',
+    btnDeleteAccount:'Elimina account',
+    confirmResetPwd:(n)=>`Resettare la password di ${n}? Al prossimo accesso dovrà impostarne una nuova.`,
+    confirmDeleteUser:(n)=>`Eliminare l'account di ${n}? Questa operazione rimuove la password salvata.`,
+    pwdResetToast:(n)=>`Password di ${n} resettata`,
+    accountDeletedToast:(n)=>`Account di ${n} eliminato`,
+    // Booking toasts
+    selectDate:T('selectDate'),
+    enterTime:T('enterTime'),
+    // Guide section labels
+    dpiRequired:'DPI richiesti',
+    operativeProcedure:'Procedura operativa',
+    operativeNotes:'Note operative',
+    backToMachines:T('backToMachines'),
+  },
+  en:{
+    // Login
+    loginTitle:'Log in to Lab Portal',
+    loginSub:'Select your name to continue',
+    selectUser:'Select user',
+    optPlaceholder:'— Select your name —',
+    optNewUser:'— New user —',
+    adminLabel:'Administrator',
+    adminPwdLabel:'Administrator password',
+    pwdLabel:'Password',
+    firstAccessBanner:'First login — set your personal password',
+    createPwd:'Create password',
+    confirmPwd:'Confirm password',
+    newUserBanner:'New user registration',
+    firstName:'First name',
+    lastName:'Last name',
+    btnContinue:'Continue',
+    btnLogin:'Log in',
+    btnRegister:'Register',
+    btnSetPwd:'Set password and log in',
+    subRegister:'Enter your details to register',
+    subEnterPwd:'Enter your password',
+    subFirstAccess:'First login — set your password',
+    errSelectName:'Please select your name',
+    errEnterName:'Enter your first name',
+    errEnterLastName:'Enter your last name',
+    errPwdShort:'Password must be at least 4 characters',
+    errPwdMismatch:'Passwords do not match',
+    errUserExists:'This user already exists',
+    errWrongPwd:'Wrong password',
+    errGeneric:'Error',
+    welcomeMsg:(n)=>`Welcome, ${n}!`,
+    pwdSetMsg:'Password set — welcome!',
+    placeholderMinChars:'At least 4 characters',
+    placeholderRepeat:'Repeat password',
+    placeholderFirstName:'E.g. John',
+    placeholderLastName:'E.g. Smith',
+    // Sidebar
+    navSectionLabel:'Management',
+    navCalendar:'Calendar',
+    navUsers:'User Management',
+    navMyRequests:'Notifications',
+    navReport:'Report an issue',
+    navGuides:'Machine guidelines',
+    navStats:'Statistics',
+    navIssues:'Reports',
+    btnLogout:'log out',
+    // Topbar
+    topbarSubDefault:'Select a day to view or add bookings',
+    btnNew:'+ Book',
+    btnToday:'Today',
+    viewMonth:'Month',
+    viewWeek:'Week',
+    viewDay:'Day',
+    // Section titles
+    titleCalendar:'Equipment Booking',
+    titleMyRequests:'Notifications',
+    titleUsers:'User Management',
+    titleReport:'Report an issue',
+    titleIssues:'Reports',
+    titleStats:'Statistics',
+    titleGuides:'Machine guidelines',
+    // Calendar
+    months:['January','February','March','April','May','June','July','August','September','October','November','December'],
+    days:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    detailTitleDefault:'— Select a day',
+    noBookingSelected:'No day selected',
+    noBookings:'No bookings',
+    thisMonth:'This month',
+    machinesLabel:'Equipment',
+    overlap:'OVERLAP',
+    // Booking modal
+    modalTitle:'New Booking',
+    modalSub:'Booking is confirmed if the time slot is available',
+    fieldMachine:'Equipment',
+    fieldDate:'Date',
+    fieldTimeSlot:'Time slot',
+    fieldTimeStart:'Start',
+    fieldTimeEnd:'End',
+    fieldNotes:'Notes (optional)',
+    fieldCollaborators:'Collaborators (optional)',
+    collabPlaceholder:'Select collaborators...',
+    collabSelected:(n)=>`${n} collaborator${n>1?'s':''} selected`,
+    timeError:'End time must be after start time',
+    btnCancel:'Cancel',
+    btnBook:'Book',
+    // Booking detail panel
+    deleteTitle:'Delete',
+    bookingDeleted:'Booking deleted',
+    errorReload:'Error: reload the page',
+    conflictMsg:(name,ts,te)=>`already booked by ${name} (${ts}–${te})`,
+    bookingConfirmed:'Booking confirmed',
+    // My requests
+    noRequestsSent:'No bookings yet',
+    requestsWillAppear:'Your bookings will appear here',
+    collabInviteBadge:'Collaboration invite',
+    chipDate:'Date:',
+    chipTime:'Time:',
+    bookedOn:'Booked on',
+    visibleCalendar:'✓ Visible in calendar',
+    btnDelete:'Delete',
+    confirmed:'Confirmed',
+    rsvpAccept:'✓ Accept',
+    rsvpDecline:'✕ Decline',
+    rsvpAccepted:'✓ You accepted',
+    rsvpDeclined:'✕ You declined',
+    collabConfirmed:'Participation confirmed',
+    collabDeclined:'Participation declined',
+    collabAddedNote:'📋 You have been added as a collaborator for this session',
+    // Report
+    reportMachineLabel:'Equipment',
+    reportDescLabel:'Issue description',
+    reportDescPlaceholder:'Describe the issue...',
+    reportSubmitBtn:'Submit report',
+    reportSelectMachine:'Select equipment',
+    reportEnterDesc:'Enter a description of the issue',
+    reportSent:'Report submitted',
+    // Issues (admin)
+    noIssues:'No reports',
+    issueFrom:'Reported by',
+    issueOpen:'Open',
+    issueResolved:'Resolved',
+    btnResolve:'✓ Resolve',
+    btnDeleteIssue:'🗑 Delete',
+    issueResolvedToast:'Report resolved',
+    issueDeletedToast:'Report deleted',
+    // Stats
+    statsLoading:'Loading data...',
+    statsNoData:'No data available',
+    statsNoBookings:'No approved bookings yet',
+    statsIssuesPerUser:'Reports per user',
+    // Users (admin)
+    accountActive:'Active account',
+    noAccessYet:'No login yet',
+    btnResetPwd:'Reset password',
+    btnDeleteAccount:'Delete account',
+    confirmResetPwd:(n)=>`Reset password for ${n}? They will set a new one on next login.`,
+    confirmDeleteUser:(n)=>`Delete account for ${n}? This will remove their saved password.`,
+    pwdResetToast:(n)=>`Password reset for ${n}`,
+    accountDeletedToast:(n)=>`Account deleted for ${n}`,
+    // Booking toasts
+    selectDate:'Please select a date',
+    enterTime:'Please enter a time',
+    // Guide section labels
+    dpiRequired:'Required PPE',
+    operativeProcedure:'Operating procedure',
+    operativeNotes:'Operating notes',
+    backToMachines:'← Back to equipment',
+  }
+};
+
+function T(key){return LANG[currentLang][key]||LANG['it'][key]||key;}
+
+function applyLang(){
+  const L=currentLang;
+  const btn=document.getElementById('lang-toggle');
+  if(btn)btn.textContent=L==='it'?'ENG':'ITA';
+  const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
+  const setPlaceholder=(id,val)=>{const el=document.getElementById(id);if(el)el.placeholder=val;};
+  // Login modal
+  set('login-title',T('loginTitle'));
+  set('login-sub',T('loginSub'));
+  set('lbl-select-user',T('selectUser'));
+  set('lbl-admin-pwd',T('adminPwdLabel'));
+  set('lbl-pwd',T('pwdLabel'));
+  set('lbl-create-pwd',T('createPwd'));
+  set('lbl-confirm-pwd',T('confirmPwd'));
+  set('lbl-create-pwd2',T('createPwd'));
+  set('lbl-confirm-pwd2',T('confirmPwd'));
+  set('lbl-first-name',T('firstName'));
+  set('lbl-last-name',T('lastName'));
+  set('first-access-banner',T('firstAccessBanner'));
+  set('new-user-banner',T('newUserBanner'));
+  set('user-save',T('btnContinue'));
+  setPlaceholder('f-new-password',T('placeholderMinChars'));
+  setPlaceholder('f-confirm-password',T('placeholderRepeat'));
+  setPlaceholder('f-new-reg-password',T('placeholderMinChars'));
+  setPlaceholder('f-new-reg-confirm',T('placeholderRepeat'));
+  setPlaceholder('f-new-nome',T('placeholderFirstName'));
+  setPlaceholder('f-new-cognome',T('placeholderLastName'));
+  const optPh=document.getElementById('opt-placeholder');
+  if(optPh)optPh.textContent=T('optPlaceholder');
+  const optNew=document.getElementById('opt-new-user');
+  if(optNew)optNew.textContent=T('optNewUser');
+  const adminOpt=document.querySelector('#f-username option[value="AMMINISTRATORE"]');
+  if(adminOpt)adminOpt.textContent=T('adminLabel');
+  const username=document.getElementById('f-username').value;
+  if(username==='__nuovo__')document.getElementById('user-save').textContent=T('btnRegister');
+  else if(username.toUpperCase()===ADMIN_USER)document.getElementById('user-save').textContent=T('btnLogin');
+  else if(document.getElementById('user-pwd-field').style.display!=='none')document.getElementById('user-save').textContent=T('btnLogin');
+  else if(document.getElementById('first-access-fields').style.display!=='none')document.getElementById('user-save').textContent=T('btnSetPwd');
+  // Sidebar
+  const navSect=document.querySelector('.nav-section');
+  if(navSect)navSect.textContent=T('navSectionLabel');
+  const setNav=(sec,key)=>{const el=document.querySelector(`.nav-item[data-section="${sec}"] span`);if(el)el.textContent=T(key);};
+  setNav('calendario',  'navCalendar');
+  setNav('utenti',      'navUsers');
+  setNav('mie-richieste','navMyRequests');
+  setNav('segnala',     'navReport');
+  setNav('attrezzature','navGuides');
+  setNav('statistiche', 'navStats');
+  setNav('segnalazioni','navIssues');
+  const logoutBtn=document.getElementById('change-user-btn');
+  if(logoutBtn)logoutBtn.textContent=T('btnLogout');
+  // Topbar
+  set('topbar-sub',T('topbarSubDefault'));
+  const newBtn=document.getElementById('new-btn');
+  if(newBtn)newBtn.textContent=T('btnNew');
+  const todayBtn=document.getElementById('today-btn');
+  if(todayBtn)todayBtn.textContent=T('btnToday');
+  const viewBtns=document.querySelectorAll('.view-btn');
+  const viewKeys=['viewMonth','viewWeek','viewDay'];
+  viewBtns.forEach((b,i)=>{if(viewKeys[i])b.textContent=T(viewKeys[i]);});
+  // Calendar headers
+  const calHeaders=document.querySelectorAll('#cal-grid .cal-header');
+  const dayNames=T('days');
+  calHeaders.forEach((h,i)=>{if(dayNames[i])h.textContent=dayNames[i];});
+  // Detail panel static text
+  const detailTitle=document.getElementById('detail-title');
+  if(detailTitle&&detailTitle.textContent.startsWith('—'))detailTitle.textContent=T('detailTitleDefault');
+  const detailList=document.getElementById('detail-list');
+  if(detailList&&detailList.querySelector('.no-bookings'))detailList.querySelector('.no-bookings').textContent=T('noBookingSelected');
+  const thisMonthH=document.querySelector('#section-calendario .panel-card h4:not(#detail-title)');
+  if(thisMonthH&&(thisMonthH.textContent==='Questo mese'||thisMonthH.textContent==='This month'))thisMonthH.textContent=T('thisMonth');
+  // Booking modal static labels
+  set('modal-title',T('modalTitle'));
+  set('modal-sub',T('modalSub'));
+  set('modal-cancel',T('btnCancel'));
+  set('modal-save',T('btnBook'));
+  const modalLabels=document.querySelectorAll('#modal .field label:not([id])');
+  const modalKeys=['fieldMachine','fieldDate','fieldTimeSlot','fieldNotes','fieldCollaborators'];
+  modalLabels.forEach((l,i)=>{if(modalKeys[i])l.textContent=T(modalKeys[i]);});
+  const timeStartLabel=document.querySelector('#modal .field label[id="lbl-time-start"]');
+  // Time sub-labels
+  const timeSubLabels=document.querySelectorAll('#modal .field div[style*="font-size:11px"]');
+  if(timeSubLabels[0])timeSubLabels[0].textContent=T('fieldTimeStart');
+  if(timeSubLabels[1])timeSubLabels[1].textContent=T('fieldTimeEnd');
+  const timeErr=document.getElementById('time-error');
+  if(timeErr)timeErr.textContent=T('timeError');
+  const collabTrigger=document.getElementById('collab-trigger');
+  if(collabTrigger&&(collabTrigger.textContent==='Seleziona collaboratori...'||collabTrigger.textContent==='Select collaborators...'))
+    collabTrigger.textContent=T('collabPlaceholder');
+  setPlaceholder('segnala-desc',T('reportDescPlaceholder'));
+  const segnalaBtn=document.getElementById('segnala-submit');
+  if(segnalaBtn)segnalaBtn.textContent=T('reportSubmitBtn');
+  set('segnala-title',T('titleReport'));
+  set('segnala-machine-label',T('reportMachineLabel'));
+  set('segnala-desc-label',T('reportDescLabel'));
+  const segnalaPh=document.getElementById('segnala-machine-placeholder');
+  if(segnalaPh)segnalaPh.textContent=`— ${T('reportSelectMachine')} —`;
+  // Stats header
+  const statsBarH=document.querySelector('#stats-bar-container .panel-card h4');
+  if(statsBarH)statsBarH.textContent=T('statsIssuesPerUser');
+  // Collab trigger reset if untouched
+  const collabTrigger=document.getElementById('collab-trigger');
+  if(collabTrigger&&selectedCollaborators.length===0)
+    collabTrigger.textContent=T('collabPlaceholder');
+  // Update topbar title if section is open
+  if(currentSection){
+    const titles={calendario:T('titleCalendar'),'mie-richieste':T('titleMyRequests'),utenti:T('titleUsers'),segnala:T('titleReport'),segnalazioni:T('titleIssues'),statistiche:T('titleStats'),attrezzature:T('titleGuides')};
+    if(titles[currentSection])document.getElementById('topbar-title').textContent=titles[currentSection];
+  }
+  // Re-render active section if it's open
+  populateSegnalaMachine();
+  if(currentSection==='calendario'&&calView==='mese')renderCal();
+  else if(currentSection==='calendario'&&calView==='settimana')renderWeekView();
+  else if(currentSection==='calendario'&&calView==='giorno')renderDayView();
+  if(currentSection==='mie-richieste')renderMyRequests();
+  if(currentSection==='statistiche')renderStats();
+  if(currentSection==='segnalazioni')renderIssues();
+  if(currentSection==='utenti')renderUsers();
+}
+
+function toggleLang(){
+  currentLang=currentLang==='it'?'en':'it';
+  localStorage.setItem('lang',currentLang);
+  applyLang();
+}
+
+// ─── LOGIN ──────────────────────────────────────────────────────────────────
 async function sha256(str){
   const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
@@ -1475,9 +1913,9 @@ function hideError(){document.getElementById('login-error').style.display='none'
 
 function showUserModal(){
   document.getElementById('user-modal').style.display='flex';
-  document.getElementById('login-title').textContent='Accedi al Lab Portal';
-  document.getElementById('login-sub').textContent='Seleziona il tuo nome per continuare';
-  document.getElementById('user-save').textContent='Continua';
+  document.getElementById('login-title').textContent=T('loginTitle');
+  document.getElementById('login-sub').textContent=T('loginSub');
+  document.getElementById('user-save').textContent=T('btnContinue');
   document.getElementById('f-username').value='';
   document.getElementById('admin-pwd-field').style.display='none';
   document.getElementById('user-pwd-field').style.display='none';
@@ -1501,34 +1939,34 @@ document.getElementById('f-username').addEventListener('change',async()=>{
   document.getElementById('user-pwd-field').style.display='none';
   document.getElementById('first-access-fields').style.display='none';
   document.getElementById('new-user-fields').style.display='none';
-  document.getElementById('user-save').textContent='Continua';
+  document.getElementById('user-save').textContent=T('btnContinue');
   if(!name)return;
   if(name==='__nuovo__'){
     document.getElementById('new-user-fields').style.display='block';
-    document.getElementById('login-sub').textContent='Inserisci i tuoi dati per registrarti';
-    document.getElementById('user-save').textContent='Registrati';
+    document.getElementById('login-sub').textContent=T('subRegister');
+    document.getElementById('user-save').textContent=T('btnRegister');
     return;
   }
   if(name.toUpperCase()===ADMIN_USER){
     document.getElementById('admin-pwd-field').style.display='block';
-    document.getElementById('user-save').textContent='Accedi';
+    document.getElementById('user-save').textContent=T('btnLogin');
     return;
   }
   const pwKey=name.replace(/\s+/g,'_').toLowerCase();
   if(userPasswords[pwKey]){
     document.getElementById('user-pwd-field').style.display='block';
-    document.getElementById('login-sub').textContent='Inserisci la tua password';
-    document.getElementById('user-save').textContent='Accedi';
+    document.getElementById('login-sub').textContent=T('subEnterPwd');
+    document.getElementById('user-save').textContent=T('btnLogin');
   }else{
     document.getElementById('first-access-fields').style.display='block';
-    document.getElementById('login-sub').textContent='Primo accesso — imposta la tua password';
-    document.getElementById('user-save').textContent='Imposta password e accedi';
+    document.getElementById('login-sub').textContent=T('subFirstAccess');
+    document.getElementById('user-save').textContent=T('btnSetPwd');
   }
 });
 
 document.getElementById('user-save').addEventListener('click',async()=>{
   const name=document.getElementById('f-username').value.trim();
-  if(!name){showError('Seleziona il tuo nome');return;}
+  if(!name){showError(T('errSelectName'));return;}
 
   // NUOVO UTENTE
   if(name==='__nuovo__'){
@@ -1536,13 +1974,13 @@ document.getElementById('user-save').addEventListener('click',async()=>{
     const cognome=document.getElementById('f-new-cognome').value.trim();
     const pwd=document.getElementById('f-new-reg-password').value;
     const confirm=document.getElementById('f-new-reg-confirm').value;
-    if(!nome){showError('Inserisci il nome');return;}
-    if(!cognome){showError('Inserisci il cognome');return;}
-    if(pwd.length<4){showError('La password deve essere di almeno 4 caratteri');return;}
-    if(pwd!==confirm){showError('Le password non coincidono');return;}
+    if(!nome){showError(T('errEnterName'));return;}
+    if(!cognome){showError(T('errEnterLastName'));return;}
+    if(pwd.length<4){showError(T('errPwdShort'));return;}
+    if(pwd!==confirm){showError(T('errPwdMismatch'));return;}
     const fullName=`${nome} ${cognome}`;
     const pwKey=fullName.replace(/\s+/g,'_').toLowerCase();
-    if(userPasswords[pwKey]){showError('Questo utente esiste già');return;}
+    if(userPasswords[pwKey]){showError(T('errUserExists'));return;}
     // Save user in Firebase: passwords + users list
     const hash=await sha256(pwd);
     await fbPatch('passwords',{[pwKey]:hash});
@@ -1555,14 +1993,14 @@ document.getElementById('user-save').addEventListener('click',async()=>{
     sel.insertBefore(newOpt,sel.querySelector('option[value="AMMINISTRATORE"]'));
     setUser(fullName,false);
     document.getElementById('user-modal').style.display='none';
-    showToast(`Benvenuto, ${fullName}!`,'success');
+    showToast(T('welcomeMsg')(fullName),'success');
     return;
   }
 
   // ADMIN
   if(name.toUpperCase()===ADMIN_USER){
     const pwd=document.getElementById('f-admin-password').value;
-    if(pwd!==ADMIN_PASS){showError('Password errata');return;}
+    if(pwd!==ADMIN_PASS){showError(T('errWrongPwd'));return;}
     setUser(ADMIN_USER,true);
     document.getElementById('user-modal').style.display='none';
     return;
@@ -1573,9 +2011,9 @@ document.getElementById('user-save').addEventListener('click',async()=>{
   // EXISTING USER — login
   if(userPasswords[pwKey]){
     const pwd=document.getElementById('f-password').value;
-    if(!pwd){showError('Inserisci la password');return;}
+    if(!pwd){showError(T('pwdLabel'));return;}
     const hash=await sha256(pwd);
-    if(hash!==userPasswords[pwKey]){showError('Password errata');return;}
+    if(hash!==userPasswords[pwKey]){showError(T('errWrongPwd'));return;}
     setUser(name,false);
     document.getElementById('user-modal').style.display='none';
     return;
@@ -1584,14 +2022,14 @@ document.getElementById('user-save').addEventListener('click',async()=>{
   // FIRST ACCESS — set password
   const newPwd=document.getElementById('f-new-password').value;
   const confirmPwd=document.getElementById('f-confirm-password').value;
-  if(newPwd.length<4){showError('La password deve essere di almeno 4 caratteri');return;}
-  if(newPwd!==confirmPwd){showError('Le password non coincidono');return;}
+  if(newPwd.length<4){showError(T('errPwdShort'));return;}
+  if(newPwd!==confirmPwd){showError(T('errPwdMismatch'));return;}
   const hash=await sha256(newPwd);
   await fbPatch('passwords',{[pwKey]:hash});
   userPasswords[pwKey]=hash;
   setUser(name,false);
   document.getElementById('user-modal').style.display='none';
-  showToast('Password impostata — benvenuto!','success');
+  showToast(T('pwdSetMsg'),'success');
 });
 
 const _fadmin=document.getElementById('f-admin-password');
@@ -1865,15 +2303,15 @@ function renderMachineDetail(machineId){
     </div>
     <div class="guide-warn"><span style="font-size:18px;flex-shrink:0">⚠️</span><span>${guide.warning}</span></div>
     <div class="guide-section">
-      <div class="guide-section-title"><span>🦺</span> DPI richiesti</div>
+      <div class="guide-section-title"><span>🦺</span>${T('dpiRequired')}</div>
       <ul style="list-style:disc;padding-left:18px">${guide.dpi.map(d=>`<li style="font-size:13px;color:var(--text-dark);padding:4px 0">${d}</li>`).join('')}</ul>
     </div>
     <div class="guide-section">
-      <div class="guide-section-title"><span>📋</span> Procedura operativa</div>
+      <div class="guide-section-title"><span>📋</span>${T('operativeProcedure')}</div>
       <ul class="guide-step-list">${steps}</ul>
     </div>
     <div class="guide-section">
-      <div class="guide-section-title"><span>📝</span> Note operative</div>
+      <div class="guide-section-title"><span>📝</span>${T('operativeNotes')}</div>
       <p style="font-size:13px;color:var(--text-dark);line-height:1.6">${guide.notes}</p>
     </div>`;
 }
@@ -1967,7 +2405,7 @@ function renderCollabChips(){
     chips.innerHTML='';
     return;
   }
-  trigger.textContent=`${selectedCollaborators.length} collaborator${selectedCollaborators.length>1?'i':'e'} selezionat${selectedCollaborators.length>1?'i':'o'}`;
+  trigger.textContent=`${T('collabSelected')(selectedCollaborators.length)}`;
   chips.innerHTML=selectedCollaborators.map(name=>`
     <span class="collab-chip">
       ${name}
@@ -2051,6 +2489,7 @@ selectedDate=today();
 const _dp=document.querySelector('#section-calendario .detail-panel');
 if(_dp)_dp.classList.add('dp-visible');
 loadPasswords().then(()=>loadDynamicUsers()).then(()=>{
+  applyLang();
   const savedUser=localStorage.getItem('session_user');
   const savedAdmin=localStorage.getItem('session_admin')==='1';
   if(savedUser){

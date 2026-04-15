@@ -1372,9 +1372,22 @@ document.getElementById('modal-save').addEventListener('click',async()=>{
   // Verifica conflitti su Firebase (dati freschi)
   const bkData=await fbGet(`bookings/${ym}`)||{};
   const dayBk=bkData[date]||[];
+
+  // 1. Stessa macchina già prenotata da qualcun altro
   const conflict=dayBk.find(b=>b.machine===machine&&b.timeStart<timeEnd&&b.timeEnd>timeStart);
   if(conflict){
     showToast(`${getMachineByID(machine).name} ${T('conflictMsg')(conflict.user,conflict.timeStart,conflict.timeEnd)}`,'error');
+    return;
+  }
+
+  // 2. L'utente ha già un'altra prenotazione sovrapposta nello stesso orario
+  const userConflict=dayBk.find(b=>b.user===currentUser&&b.timeStart<timeEnd&&b.timeEnd>timeStart);
+  if(userConflict){
+    const conflictMachineName=getMachineByID(userConflict.machine).name;
+    showToast(currentLang==='en'
+      ?`You already have a booking on ${conflictMachineName} (${userConflict.timeStart}–${userConflict.timeEnd})`
+      :`Hai già una prenotazione su ${conflictMachineName} (${userConflict.timeStart}–${userConflict.timeEnd})`
+    ,'error');
     return;
   }
 

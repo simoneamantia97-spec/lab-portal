@@ -269,6 +269,9 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
   /* Main fills width */
   .main{width:100%;min-width:0}
 
+  /* Safe area top (Dynamic Island / notch) */
+  .topbar{padding-top:calc(10px + env(safe-area-inset-top,0px))}
+
   /* Topbar compact */
   .topbar{padding:10px 16px}
   .topbar h2{font-size:15px}

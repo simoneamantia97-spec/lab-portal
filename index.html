@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Lab Portal">
 <meta name="theme-color" content="#0f1623">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -269,12 +269,15 @@ html{background:var(--sidebar-bg)}body{font-family:'IBM Plex Sans',sans-serif;di
   /* Main fills width */
   .main{width:100%;min-width:0}
 
-  /* ── SAFE AREA: top (Dynamic Island / notch) ── */
-  /* Extend the topbar to cover the status bar area */
+  /* ── SAFE AREA: top ── */
   .topbar{
-    padding-top: calc(10px + env(safe-area-inset-top, 44px));
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
     padding-left: 16px;
     padding-right: 16px;
+  }
+  /* In PWA standalone mode, ensure proper safe area handling */
+  body{
+    padding-top: env(safe-area-inset-top, 0px);
   }
 
   /* ── SAFE AREA: bottom ── */

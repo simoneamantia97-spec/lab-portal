@@ -2,8 +2,14 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Lab Portal — UniPA</title>
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lab Portal">
+<meta name="theme-color" content="#0f1623">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -242,6 +248,84 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
 .guide-warn{background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:14px;display:flex;gap:8px;align-items:flex-start}
 .guide-chips{display:flex;flex-wrap:wrap;gap:6px}
 .guide-chip{font-size:11px;padding:3px 10px;border-radius:5px;background:#eef4ff;color:#1e40af;font-weight:500}
+
+/* ─── PWA / MOBILE RESPONSIVE ─────────────────────────────────────────── */
+/* Bottom nav bar (mobile only) */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:60px;background:var(--sidebar-bg);border-top:1px solid var(--border);z-index:300;flex-direction:row;justify-content:space-around;align-items:center;padding-bottom:env(safe-area-inset-bottom)}
+.mobile-nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 12px;cursor:pointer;color:var(--text-muted);font-size:10px;font-weight:500;border-radius:8px;transition:all .15s;position:relative;min-width:48px}
+.mobile-nav-item.active{color:var(--accent)}
+.mobile-nav-item svg{width:22px;height:22px;fill:currentColor}
+.mobile-nav-badge{position:absolute;top:4px;right:8px;background:#f87171;color:#fff;font-size:9px;border-radius:10px;padding:1px 5px;font-family:'IBM Plex Mono',monospace}
+
+@media (max-width: 768px) {
+  /* Hide sidebar, show bottom nav */
+  .sidebar{display:none !important}
+  .mobile-nav{display:flex}
+
+  /* Body fills screen, leave space for bottom nav */
+  body{height:100dvh;padding-bottom:60px;box-sizing:border-box}
+
+  /* Main fills width */
+  .main{width:100%;min-width:0}
+
+  /* Topbar compact */
+  .topbar{padding:10px 16px}
+  .topbar h2{font-size:15px}
+  .topbar p{font-size:12px}
+  .topbar-right{gap:6px}
+  .btn{padding:7px 12px;font-size:12px}
+
+  /* Content padding */
+  .content{padding:14px 14px;flex-direction:column;gap:16px}
+
+  /* Calendar: force scroll on week view */
+  .cal-panel{min-width:0;overflow-x:auto}
+  .cal-grid{gap:3px}
+  .cal-day{min-height:52px;font-size:11px;padding:5px 6px}
+  .day-label{font-size:10px;padding:3px 6px}
+
+  /* Detail panel: stack below calendar */
+  .detail-panel{flex-basis:auto !important;width:100%}
+  .panel-card{min-width:0 !important}
+
+  /* Machine grid: 2 columns on mobile */
+  .machine-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+  .machine-card-img{height:120px}
+  .machine-card-name{font-size:13px}
+  .machine-card-sub{font-size:11px}
+
+  /* Stats: single column */
+  .stats-grid{grid-template-columns:1fr !important;gap:14px}
+
+  /* Notifications: full width */
+  .notif-section{max-width:100% !important}
+  .notif-card{padding:12px 14px}
+
+  /* Modal: full screen on mobile */
+  .modal{width:calc(100vw - 20px);max-width:calc(100vw - 20px);padding:20px;border-radius:12px}
+
+  /* Form inputs larger touch targets */
+  select,input,textarea{font-size:16px !important;padding:10px 12px !important}
+  .form-select{font-size:16px}
+
+  /* Machine guide detail */
+  .guide-detail{padding:14px}
+  .guide-steps li{font-size:13px;padding:8px 12px}
+
+  /* Issues */
+  .issue-card{padding:12px 14px}
+
+  /* Booking form collab multi-select */
+  .collab-dropdown{max-height:180px}
+
+  /* Tooltip: disable on mobile (replaced by tap) */
+  .cal-tooltip{display:none !important}
+}
+
+@media (max-width: 420px) {
+  .machine-grid{grid-template-columns:1fr}
+  .topbar-right .btn-ghost{display:none}
+}
 </style>
 </head>
 <body>
@@ -2501,6 +2585,88 @@ loadPasswords().then(()=>loadDynamicUsers()).then(()=>{
   }
 });
 setInterval(loadRequests,30000);
+
+// ─── PWA SERVICE WORKER ───────────────────────────────────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js')
+      .then(r=>console.log('SW registered:',r.scope))
+      .catch(e=>console.log('SW error:',e));
+  });
+}
+
+// ─── MOBILE BOTTOM NAV ───────────────────────────────────────────────────
+function mobileNav(section){
+  // Reuse the existing showSection logic
+  showSection(section);
+  document.querySelectorAll('.mobile-nav-item').forEach(el=>{
+    el.classList.toggle('active', el.dataset.section===section);
+  });
+}
+
+// Keep mobile nav badge in sync with sidebar badge
+const _origUpdateBadge = updateUserNotifBadge;
+function updateUserNotifBadge(){
+  _origUpdateBadge();
+  const badge = document.getElementById('nav-badge');
+  const mbadge = document.getElementById('mn-badge');
+  if(mbadge && badge){
+    const count = badge.textContent.trim();
+    const show = badge.style.display !== 'none' && count !== '0' && count !== '';
+    mbadge.style.display = show ? '' : 'none';
+    mbadge.textContent = count;
+  }
+}
+
+// Sync mobile nav active state when section changes via sidebar (desktop→mobile or vice versa)
+const _origShowSection = showSection;
+function showSection(s){
+  _origShowSection(s);
+  document.querySelectorAll('.mobile-nav-item').forEach(el=>{
+    el.classList.toggle('active', el.dataset.section===s);
+  });
+}
+
+// Translate mobile nav labels
+function applyMobileNavLang(){
+  const mn={
+    'mn-cal': currentLang==='en'?'Calendar':'Calendario',
+    'mn-book': currentLang==='en'?'Book':'Prenota',
+    'mn-notif': currentLang==='en'?'Alerts':'Avvisi',
+    'mn-guide': currentLang==='en'?'Guide':'Guida',
+    'mn-mine': currentLang==='en'?'Mine':'I Miei',
+  };
+  Object.entries(mn).forEach(([id,txt])=>{const el=document.getElementById(id);if(el)el.textContent=txt;});
+}
+// Hook into language toggle
+const _origApplyLang = applyLang;
+function applyLang(){_origApplyLang();applyMobileNavLang();}
+
 </script>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav" id="mobile-nav">
+  <div class="mobile-nav-item active" data-section="calendario" onclick="mobileNav('calendario')">
+    <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5C3.9 4 3 4.9 3 6v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM7 11h5v5H7z"/></svg>
+    <span id="mn-cal">Calendario</span>
+  </div>
+  <div class="mobile-nav-item" data-section="prenotazioni" onclick="mobileNav('prenotazioni')">
+    <svg viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+    <span id="mn-book">Prenota</span>
+  </div>
+  <div class="mobile-nav-item" data-section="notifiche" onclick="mobileNav('notifiche')">
+    <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5S10.5 3.17 10.5 4v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+    <span id="mn-notif">Notifiche</span>
+    <span class="mobile-nav-badge" id="mn-badge" style="display:none">0</span>
+  </div>
+  <div class="mobile-nav-item" data-section="linee-guida" onclick="mobileNav('linee-guida')">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+    <span id="mn-guide">Guida</span>
+  </div>
+  <div class="mobile-nav-item" data-section="mie-richieste" onclick="mobileNav('mie-richieste')">
+    <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+    <span id="mn-mine">I Miei</span>
+  </div>
+</nav>
 </body>
 </html>

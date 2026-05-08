@@ -30,7 +30,7 @@
   --green:#22c07a;
   --amber:#f0a030;
 }
-body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:hidden;background:var(--bg-main)}
+html{background:var(--sidebar-bg)}body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:hidden;background:var(--bg-main)}
 
 /* SIDEBAR */
 .sidebar{width:var(--sidebar-w);background:var(--sidebar-bg);display:flex;flex-direction:column;flex-shrink:0;border-right:1px solid var(--border)}
@@ -269,8 +269,33 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
   /* Main fills width */
   .main{width:100%;min-width:0}
 
-  /* Safe area top (Dynamic Island / notch) */
-  .topbar{padding-top:calc(10px + env(safe-area-inset-top,0px))}
+  /* ── SAFE AREA: top (Dynamic Island / notch) ── */
+  /* Extend the topbar to cover the status bar area */
+  .topbar{
+    padding-top: calc(10px + env(safe-area-inset-top, 44px));
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* ── SAFE AREA: bottom ── */
+  /* Body background extends behind safe area at bottom */
+  body{
+    background: var(--bg-main);
+  }
+  /* Nav sits above safe area; spacer fills below with dark bg */
+  .mobile-nav{
+    bottom: env(safe-area-inset-bottom, 0px) !important;
+  }
+  .mobile-nav-sa{
+    height: env(safe-area-inset-bottom, 0px) !important;
+    background: var(--sidebar-bg) !important;
+  }
+  /* Content scroll area: account for topbar height + top safe area */
+  .content{
+    padding-bottom: 20px;
+  }
+
+
 
   /* Topbar compact */
   .topbar{padding:10px 16px}

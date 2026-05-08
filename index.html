@@ -251,7 +251,7 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
 
 /* ─── PWA / MOBILE RESPONSIVE ─────────────────────────────────────────── */
 /* Bottom nav bar (mobile only) */
-.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:calc(60px + env(safe-area-inset-bottom));background:var(--sidebar-bg);border-top:1px solid var(--border);z-index:300;flex-direction:row;justify-content:space-around;align-items:flex-start;padding-top:8px;padding-bottom:env(safe-area-inset-bottom)}
+.mobile-nav{display:none;position:fixed;bottom:env(safe-area-inset-bottom,0px);left:0;right:0;height:60px;background:var(--sidebar-bg);border-top:1px solid var(--border);z-index:300;flex-direction:row;justify-content:space-around;align-items:center;}.mobile-nav-sa{display:none;position:fixed;bottom:0;left:0;right:0;height:env(safe-area-inset-bottom,0px);background:var(--sidebar-bg);z-index:299}
 .mobile-nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 12px;cursor:pointer;color:var(--text-muted);font-size:10px;font-weight:500;border-radius:8px;transition:all .15s;position:relative;min-width:48px}
 .mobile-nav-item.active{color:var(--accent)}
 .mobile-nav-item svg{width:22px;height:22px;fill:currentColor}
@@ -261,9 +261,10 @@ body{font-family:'IBM Plex Sans',sans-serif;display:flex;height:100vh;overflow:h
   /* Hide sidebar, show bottom nav */
   .sidebar{display:none !important}
   .mobile-nav{display:flex}
+  .mobile-nav-sa{display:block}
 
   /* Body fills screen, leave space for bottom nav */
-  body{height:100dvh;padding-bottom:calc(60px + env(safe-area-inset-bottom));box-sizing:border-box}
+  body{height:100dvh;padding-bottom:calc(60px + env(safe-area-inset-bottom,0px));box-sizing:border-box}
 
   /* Main fills width */
   .main{width:100%;min-width:0}
@@ -2650,6 +2651,7 @@ function applyLang(){_origApplyLang();applyMobileNavLang();}
 </script>
 
 <!-- MOBILE BOTTOM NAV -->
+<div class="mobile-nav-sa"></div>
 <nav class="mobile-nav" id="mobile-nav">
   <div class="mobile-nav-item active" data-section="calendario" onclick="mobileNav('calendario')">
     <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5C3.9 4 3 4.9 3 6v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM7 11h5v5H7z"/></svg>

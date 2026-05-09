@@ -339,7 +339,9 @@ html{background:var(--sidebar-bg)}body{font-family:'IBM Plex Sans',sans-serif;di
   .notif-card{padding:12px 14px}
 
   /* Modal: full screen on mobile */
-  .modal{width:calc(100vw - 20px);max-width:calc(100vw - 20px);padding:20px;border-radius:12px;max-height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 80px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+  /* Mobile modal: align top, allow overlay to scroll */
+  .modal-overlay{align-items:flex-start;overflow-y:auto;padding:env(safe-area-inset-top,20px) 0 calc(60px + env(safe-area-inset-bottom,0px) + 20px) 0;-webkit-overflow-scrolling:touch}
+  .modal{width:calc(100vw - 20px);max-width:calc(100vw - 20px);padding:20px;border-radius:12px;margin:auto}
 
   /* Form inputs larger touch targets */
   select,input,textarea{font-size:16px !important;padding:10px 12px !important}

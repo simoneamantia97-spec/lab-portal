@@ -1338,6 +1338,21 @@ document.addEventListener('click',async e=>{
   const issueId=`issue_${Date.now()}_${Math.random().toString(36).substr(2,6)}`;
   const issue={machine,desc,user:currentUser,ts:Date.now(),status:'open'};
   await fbPatch('issues',{[issueId]:issue});
+  // Notifica Telegram all'amministratore
+  try{
+    const machineLbl = machineName(ALL_MACHINES.find(m=>m.id===machine)||{name:machine});
+    const dateStr = new Date().toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const msg = `⚠️ *Nuova Segnalazione — Lab Portal UniPA*\n\n`+
+                `👤 *Utente:* ${currentUser}\n`+
+                `🔧 *Macchinario:* ${machineLbl}\n`+
+                `📅 *Data/Ora:* ${dateStr}\n`+
+                `📝 *Descrizione:*\n${desc}`;
+    await fetch(`https://api.telegram.org/bot8600466474:AAFTy5T7h3SgRFz53AjVDlUVHB6pLer07Bc/sendMessage`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({chat_id:'232747333',text:msg,parse_mode:'Markdown'})
+    });
+  }catch(err){console.warn('Telegram notify failed:',err);}
   // Reset form
   document.getElementById('segnala-machine').value='';
   document.getElementById('segnala-desc').value='';

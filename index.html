@@ -152,7 +152,8 @@ html{background:var(--sidebar-bg)}body{font-family:'IBM Plex Sans',sans-serif;di
 .modal .modal-sub{font-size:13px;color:var(--text-gray);margin-bottom:22px}
 .field{margin-bottom:16px}
 .field label{display:block;font-size:12px;font-weight:600;color:var(--text-gray);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
-.field input,.field select,.field textarea{width:100%;padding:9px 12px;border:1.5px solid #dde2ef;border-radius:8px;font-size:14px;font-family:'IBM Plex Sans',sans-serif;color:var(--text-dark);background:white;outline:none;transition:border .15s}
+.field input,.field select,.field textarea{width:100%;box-sizing:border-box;padding:9px 12px;border:1.5px solid #dde2ef;border-radius:8px;font-size:14px;font-family:'IBM Plex Sans',sans-serif;color:var(--text-dark);background:white;outline:none;transition:border .15s;-webkit-appearance:none;appearance:none}
+.field input[type='date'],.field input[type='time']{min-height:42px;text-align:left}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
 .field textarea{resize:vertical;min-height:72px}
 .modal-actions{display:flex;gap:10px;margin-top:22px}

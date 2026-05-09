@@ -1342,15 +1342,19 @@ document.addEventListener('click',async e=>{
   try{
     const machineLbl = machineName(ALL_MACHINES.find(m=>m.id===machine)||{name:machine});
     const dateStr = new Date().toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-    const text = `⚠️ Nuova Segnalazione — Lab Portal UniPA\n\n`+
-                 `👤 Utente: ${currentUser}\n`+
-                 `🔧 Macchinario: ${machineLbl}\n`+
-                 `📅 Data/Ora: ${dateStr}\n`+
-                 `📝 Descrizione:\n${desc}`;
-    // Invio tramite img tag — bypass totale CORS
-    const params=new URLSearchParams({text});
+    const text = '⚠️ Nuova Segnalazione — Lab Portal UniPA\n\n'+
+                 '👤 Utente: '+currentUser+'\n'+
+                 '🔧 Macchinario: '+machineLbl+'\n'+
+                 '📅 Data/Ora: '+dateStr+'\n'+
+                 '📝 Descrizione:\n'+desc;
+    // Notifica Telegram diretta (API supporta CORS)
+    const tgParams=new URLSearchParams({
+      chat_id:'232747333',
+      text:text,
+      parse_mode:'HTML'
+    });
     const _img=new Image();
-    _img.src='https://hook.eu1.make.com/lul28koys7omfh9ctb9k1g8oh5ts5apl?'+params.toString();
+    _img.src='https://api.telegram.org/bot8600466474:AAFX7tdbuW7ixA8XeKhUbF_SvzL3n8Cm4HM/sendMessage?'+tgParams.toString();
   }catch(err){console.warn('Webhook notify failed:',err);}
   // Reset form
   document.getElementById('segnala-machine').value='';

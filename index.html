@@ -356,7 +356,9 @@ html{background:var(--sidebar-bg)}body{font-family:'IBM Plex Sans',sans-serif;di
   .issue-card{padding:12px 14px}
 
   /* Booking form collab multi-select */
-  .collab-dropdown{max-height:180px}
+  /* Collaborator dropdown: inline (relative) on mobile so it pushes form content
+     and is fully reachable through modal scroll */
+  .collab-dropdown{position:relative !important;top:auto !important;max-height:240px;margin-top:6px;box-shadow:none;border-color:#dde2ef}
 
   /* Tooltip: disable on mobile */
   .cal-tooltip{display:none !important}

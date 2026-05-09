@@ -1347,11 +1347,10 @@ document.addEventListener('click',async e=>{
                  `🔧 Macchinario: ${machineLbl}\n`+
                  `📅 Data/Ora: ${dateStr}\n`+
                  `📝 Descrizione:\n${desc}`;
+    // Invio tramite img tag — bypass totale CORS
     const params=new URLSearchParams({text});
-    await fetch('https://hook.eu1.make.com/lul28koys7omfh9ctb9k1g8oh5ts5apl?'+params.toString(),{
-      method:'GET',
-      mode:'no-cors'
-    });
+    const _img=new Image();
+    _img.src='https://hook.eu1.make.com/lul28koys7omfh9ctb9k1g8oh5ts5apl?'+params.toString();
   }catch(err){console.warn('Webhook notify failed:',err);}
   // Reset form
   document.getElementById('segnala-machine').value='';

@@ -565,8 +565,12 @@ html{background:var(--sidebar-bg)}body{font-family:'IBM Plex Sans',sans-serif;di
     <h3 id="modal-title">Nuova Prenotazione</h3>
     <p class="modal-sub" id="modal-sub">La prenotazione verrà confermata se la fascia oraria è libera</p>
     <div class="field">
-      <label>Macchinario</label>
-      <select id="f-machine"></select>
+      <label>Macchinari</label>
+      <div class="collab-wrapper" id="machine-wrapper">
+        <button type="button" class="collab-trigger" id="machine-trigger" style="text-align:left">Seleziona macchinari...</button>
+        <div class="collab-dropdown" id="machine-dropdown"></div>
+      </div>
+      <div class="collab-chips" id="machine-chips"></div>
     </div>
     <div class="field">
       <label>Data</label>
@@ -1061,9 +1065,20 @@ function renderLegend(){
 }
 
 function populateMachineSelect(){
-  document.getElementById('f-machine').innerHTML=MACHINE_GROUPS.map(g=>
-    `<optgroup label="${machineGroupLabel(g)}">${g.machines.map(m=>`<option value="${m.id}">${machineName(m)}</option>`).join('')}</optgroup>`
+  // Multi-select macchine
+  const machineDropdown=document.getElementById('machine-dropdown');
+  const machineTrigger=document.getElementById('machine-trigger');
+  machineDropdown.innerHTML=MACHINE_GROUPS.map(g=>
+    `<div style="padding:6px 14px 2px;font-size:10px;font-weight:700;color:#9ca3af;letter-spacing:1px;text-transform:uppercase">${machineGroupLabel(g)}</div>`+
+    g.machines.map(m=>`<label class="collab-item" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer"><input type="checkbox" class="machine-cb" value="${m.id}" style="width:16px;height:16px;accent-color:var(--accent)"> ${machineName(m)}</label>`).join('')
   ).join('');
+  // Toggle dropdown
+  machineTrigger.onclick=(e)=>{e.stopPropagation();machineDropdown.style.display=machineDropdown.style.display==='block'?'none':'block';};
+  document.addEventListener('click',()=>{machineDropdown.style.display='none';});
+  // Update chips when selection changes
+  machineDropdown.querySelectorAll('.machine-cb').forEach(cb=>{
+    cb.addEventListener('change',updateMachineChips);
+  });
 }
 
 // LE MIE RICHIESTE (utenti normali)
@@ -1511,55 +1526,78 @@ document.getElementById('modal-cancel').addEventListener('click',()=>{document.g
 document.getElementById('modal-close-x').addEventListener('click',()=>{document.getElementById('modal').style.display='none'});
 document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))document.getElementById('modal').style.display='none'});
 
+
+function getSelectedMachines(){
+  return [...document.querySelectorAll('.machine-cb:checked')].map(cb=>cb.value);
+}
+function updateMachineChips(){
+  const sel=getSelectedMachines();
+  const trigger=document.getElementById('machine-trigger');
+  trigger.textContent=sel.length===0?'Seleziona macchinari...':sel.map(id=>machineName(getMachineByID(id))).join(', ');
+  document.getElementById('machine-chips').innerHTML=sel.map(id=>{
+    const m=getMachineByID(id);
+    return `<span style="display:inline-flex;align-items:center;gap:5px;background:#f0f4ff;border-radius:20px;padding:3px 10px 3px 8px;font-size:12px;margin:3px 3px 0 0;color:var(--text-dark)"><span class="legend-dot ${colorClass(m.color)}" style="width:8px;height:8px;border-radius:50%;flex-shrink:0"></span>${machineName(m)}<span onclick="uncheckMachine('${id}')" style="cursor:pointer;color:#9ca3af;font-size:14px;line-height:1;margin-left:2px">×</span></span>`;
+  }).join('');
+}
+function uncheckMachine(id){
+  const cb=document.querySelector(`.machine-cb[value="${id}"]`);
+  if(cb){cb.checked=false;updateMachineChips();}
+}
+function showCredsModal(machineIds){
+  const hasCreds=machineIds.filter(id=>MACHINE_CREDENTIALS[id]);
+  if(hasCreds.length===0)return;
+  document.getElementById('creds-list').innerHTML=hasCreds.map(id=>{
+    const cr=MACHINE_CREDENTIALS[id];
+    const m=getMachineByID(id);
+    return `<div style="background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:10px">
+      <div style="font-weight:600;font-size:13px;color:#0f1623;margin-bottom:8px">${machineName(m)}</div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span style="color:#7a8aaa">Username</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:#0f1623">${cr.username}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:#7a8aaa">Password</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:#0f1623">${cr.password}</span></div>
+    </div>`;
+  }).join('');
+  document.getElementById('creds-modal').style.display='flex';
+}
 document.getElementById('modal-save').addEventListener('click',async()=>{
-  const machine=document.getElementById('f-machine').value;
+  const machines=getSelectedMachines();
   const date=document.getElementById('f-date').value;
   const timeStart=document.getElementById('f-time-start').value;
   const timeEnd=document.getElementById('f-time-end').value;
   const note=document.getElementById('f-note').value.trim();
+  if(machines.length===0){showToast(currentLang==='en'?'Select at least one machine':'Seleziona almeno un macchinario','error');return;}
   if(!date){showToast(T('selectDate'));return;}
   if(!timeStart||!timeEnd){showToast(T('enterTime'));return;}
   if(timeEnd<=timeStart){document.getElementById('time-error').style.display='block';return;}
   document.getElementById('time-error').style.display='none';
 
-  const reqId=`req_${Date.now()}_${Math.random().toString(36).substr(2,6)}`;
   const collaborators=getSelectedCollaborators();
   const ym=`${new Date(date+'T12:00:00').getFullYear()}-${new Date(date+'T12:00:00').getMonth()}`;
 
   // Verifica conflitti su Firebase (dati freschi)
   const bkData=await fbGet(`bookings/${ym}`)||{};
   const dayBk=bkData[date]||[];
-
-  // 1. Stessa macchina già prenotata da qualcun altro
-  const conflict=dayBk.find(b=>b.machine===machine&&b.timeStart<timeEnd&&b.timeEnd>timeStart);
-  if(conflict){
-    showToast(`${machineName(getMachineByID(machine))} ${T('conflictMsg')(conflict.user,conflict.timeStart,conflict.timeEnd)}`,'error');
-    return;
-  }
-
-  // 2. L'utente ha già un'altra prenotazione sovrapposta nello stesso orario
-  const userConflict=dayBk.find(b=>b.user===currentUser&&b.timeStart<timeEnd&&b.timeEnd>timeStart);
-  if(userConflict){
-    const conflictMachineName=machineName(getMachineByID(userConflict.machine));
-    showToast(currentLang==='en'
-      ?`You already have a booking on ${conflictMachineName} (${userConflict.timeStart}–${userConflict.timeEnd})`
-      :`Hai già una prenotazione su ${conflictMachineName} (${userConflict.timeStart}–${userConflict.timeEnd})`
-    ,'error');
-    return;
-  }
-
-  // Nessun conflitto → prenota direttamente
   if(!bkData[date])bkData[date]=[];
-  bkData[date].push({machine,timeStart,timeEnd,note,user:currentUser,collaborators,reqId,ts:Date.now()});
+
+  // Controlla conflitti per ogni macchina selezionata
+  for(const machine of machines){
+    const conflict=dayBk.find(b=>b.machine===machine&&b.timeStart<timeEnd&&b.timeEnd>timeStart);
+    if(conflict){
+      showToast(`${machineName(getMachineByID(machine))} ${T('conflictMsg')(conflict.user,conflict.timeStart,conflict.timeEnd)}`,'error');
+      return;
+    }
+  }
+
+  // Nessun conflitto → prenota tutte le macchine selezionate
+  const bookedReqIds=[];
+  for(const machine of machines){
+    const reqId=`req_${Date.now()}_${Math.random().toString(36).substr(2,6)}`;
+    bookedReqIds.push(reqId);
+    bkData[date].push({machine,timeStart,timeEnd,note,user:currentUser,collaborators,reqId,ts:Date.now()});
+    const req={machine,date,timeStart,timeEnd,note,user:currentUser,collaborators,ts:Date.now(),status:'approved'};
+    await fbPatch('requests',{[reqId]:req});
+    allRequests[reqId]=req;
+    if(collaborators&&collaborators.length>0)await writeCollabNotifs(reqId,req);
+  }
   await fbSet(`bookings/${ym}`,bkData);
-
-  // Salva record in requests per storico/notifiche
-  const req={machine,date,timeStart,timeEnd,note,user:currentUser,collaborators,ts:Date.now(),status:'approved'};
-  await fbPatch('requests',{[reqId]:req});
-  allRequests[reqId]=req;
-
-  // Notifiche collaboratori
-  if(collaborators&&collaborators.length>0)await writeCollabNotifs(reqId,req);
 
   // Aggiorna calendario
   const d=new Date(date+'T12:00:00');
@@ -1567,6 +1605,9 @@ document.getElementById('modal-save').addEventListener('click',async()=>{
   selectedDate=date;renderCal();if(selectedDate)renderDetail(selectedDate);
   showToast(T('bookingConfirmed'),'success');
   document.getElementById('modal').style.display='none';
+
+  // Mostra banner credenziali se necessario
+  showCredsModal(machines);
 });
 
 document.getElementById('new-btn').addEventListener('click',()=>{
@@ -2409,6 +2450,13 @@ const MACHINE_GUIDES={
 };
 
 function svgForMachine(id){return MACHINE_ICONS[id]||MACHINE_ICONS['hardness'];}
+// ─── CREDENZIALI MACCHINE ─────────────────────────────────────────────────
+// Aggiungere qui le credenziali delle macchine che le richiedono
+const MACHINE_CREDENTIALS={
+  esab:{username:'ESAB',password:'81111'},
+  // sem:{username:'SEM_USER',password:'1234'},  // esempio per altri
+};
+
 
 function renderMachineCards(){
   const grid=document.getElementById('machine-cards-grid');
@@ -2758,5 +2806,21 @@ function mobileNav(sec){
     <span id="mn-segnala">Segnala</span>
   </div>
 </nav>
+
+<!-- CREDENTIALS BANNER -->
+<div id="creds-modal" style="display:none;position:fixed;inset:0;background:rgba(15,22,35,.6);z-index:500;display:none;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:16px;padding:28px;width:340px;max-width:calc(100vw - 32px);box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div style="width:36px;height:36px;background:#ecfdf5;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px">🔐</div>
+      <div>
+        <div style="font-weight:600;font-size:15px;color:#0f1623">Credenziali di accesso</div>
+        <div style="font-size:12px;color:#7a8aaa">Annotale prima di procedere</div>
+      </div>
+      <button onclick="document.getElementById('creds-modal').style.display='none'" style="margin-left:auto;background:none;border:none;font-size:22px;color:#9ca3af;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div id="creds-list"></div>
+    <button onclick="document.getElementById('creds-modal').style.display='none'" style="margin-top:18px;width:100%;padding:10px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">Ho preso nota</button>
+  </div>
+</div>
 </body>
 </html>

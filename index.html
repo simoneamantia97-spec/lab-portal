@@ -1183,6 +1183,7 @@ function renderMyRequests(){
   // RSVP collaborazione
   list.querySelectorAll('.collab-rsvp-btn').forEach(btn=>{
     btn.addEventListener('click',async()=>{
+      if(!await ensureActiveAccount())return;
       const reqId=btn.dataset.id;
       const action=btn.dataset.action; // 'accepted' | 'declined'
       const userKey=currentUser.replace(/\s+/g,'_').toLowerCase();
@@ -1354,6 +1355,7 @@ document.addEventListener('change',e=>{
 
 document.addEventListener('click',async e=>{
   if(!e.target||e.target.id!=='segnala-submit')return;
+  if(!await ensureActiveAccount())return;
   const machine=document.getElementById('segnala-machine').value;
   const desc=document.getElementById('segnala-desc').value.trim();
   if(!machine){showToast(T('reportSelectMachine'));return;}
@@ -1460,29 +1462,35 @@ const ALL_USERS=[
   'Sajjad Emami','Sangam Sangral','Maria Gloria Trapani','Manuela Caspio'
 ];
 
-function renderUsers(){
+async function renderUsers(){
+  if(!isAdmin)return;
+  try{
+    await loadDynamicUsers();
+    userPasswords=await readAccountData('passwords');
+  }catch(e){showToast(T('usersLoadError'),'error');return;}
+  if(!isAdmin)return;
   const list=document.getElementById('utenti-list');
-  const rows=ALL_USERS.map(name=>{
+  const rows=getActiveUsers().map(name=>{
     const pwKey=name.replace(/\s+/g,'_').toLowerCase();
     const hasPassword=!!userPasswords[pwKey];
     const initials=name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
-    return `<div class="notif-card" style="display:flex;align-items:center;gap:16px;padding:14px 18px">
-      <div style="width:40px;height:40px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:600;flex-shrink:0">${initials}</div>
-      <div style="flex:1">
-        <div style="font-size:14px;font-weight:500;color:var(--text-dark)">${name}</div>
+    return `<div class="notif-card" style="display:flex;align-items:center;gap:16px;padding:14px 18px;flex-wrap:wrap">
+      <div style="width:40px;height:40px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:600;flex-shrink:0">${escapeUserText(initials)}</div>
+      <div style="flex:1;min-width:150px">
+        <div style="font-size:14px;font-weight:500;color:var(--text-dark)">${escapeUserText(name)}</div>
         <div style="font-size:12px;margin-top:2px">
           ${hasPassword
             ? `<span style="color:#16a05a">&#10003; ${T('accountActive')}</span>`
             : `<span style="color:var(--text-gray)">${T('noAccessYet')}</span>`}
         </div>
       </div>
-      <div style="display:flex;gap:8px">
-        ${hasPassword?`<button class="btn btn-reject reset-pwd-btn" style="font-size:11px;padding:5px 12px" data-key="${pwKey}" data-name="${name}">${T('btnResetPwd')}</button>`:''}
-        <button class="btn btn-reject del-user-btn" style="font-size:11px;padding:5px 12px;background:#fff0f0" data-key="${pwKey}" data-name="${name}">${T('btnDeleteAccount')}</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${hasPassword?`<button class="btn btn-reject reset-pwd-btn" style="font-size:11px;padding:5px 12px" data-key="${escapeUserText(pwKey)}" data-name="${escapeUserText(name)}">${T('btnResetPwd')}</button>`:''}
+        <button class="btn btn-reject del-user-btn" style="font-size:11px;padding:5px 12px;background:#fff0f0" data-key="${escapeUserText(pwKey)}" data-name="${escapeUserText(name)}">${T('btnDeleteAccount')}</button>
       </div>
     </div>`;
   }).join('');
-  list.innerHTML=rows;
+  list.innerHTML=rows||`<div class="no-bookings">${T('noActiveUsers')}</div>`;
 
   list.querySelectorAll('.reset-pwd-btn').forEach(btn=>{
     btn.addEventListener('click',async()=>{
@@ -1498,11 +1506,17 @@ function renderUsers(){
   list.querySelectorAll('.del-user-btn').forEach(btn=>{
     btn.addEventListener('click',async()=>{
       const key=btn.dataset.key;const name=btn.dataset.name;
+      if(!isAdmin||key===userKey(ADMIN_USER))return;
       if(!confirm(T('confirmDeleteUser')(name)))return;
-      await fbPatch('passwords',{[key]:null});
-      delete userPasswords[key];
-      renderUsers();
-      showToast(T('accountDeletedToast')(name));
+      btn.disabled=true;
+      try{
+        await deleteUserAccount(name);
+        await renderUsers();
+        showToast(T('accountDeletedToast')(name),'success');
+      }catch(e){
+        btn.disabled=false;
+        showToast(T('userDeleteError'),'error');
+      }
     });
   });
 }
@@ -1570,6 +1584,7 @@ function showCredsModal(machineIds){
   document.getElementById('creds-modal').style.display='flex';
 }
 document.getElementById('modal-save').addEventListener('click',async()=>{
+  if(!await ensureActiveAccount())return;
   const machines=getSelectedMachines();
   const date=document.getElementById('f-date').value;
   const timeStart=document.getElementById('f-time-start').value;
@@ -1813,11 +1828,15 @@ const LANG={
     accountActive:'Account attivo',
     noAccessYet:'Nessun accesso ancora effettuato',
     btnResetPwd:'Reset password',
-    btnDeleteAccount:'Elimina account',
+    btnDeleteAccount:'Elimina definitivamente',
     confirmResetPwd:(n)=>`Resettare la password di ${n}? Al prossimo accesso dovrà impostarne una nuova.`,
-    confirmDeleteUser:(n)=>`Eliminare l'account di ${n}? Questa operazione rimuove la password salvata.`,
+    confirmDeleteUser:(n)=>`Eliminare definitivamente l’account di ${n}? Il profilo, la password e gli inviti personali saranno rimossi. Il nome non sarà più disponibile per accedere o per nuove collaborazioni e non potrà essere registrato nuovamente. Prenotazioni e segnalazioni esistenti resteranno nello storico. Confermi?`,
     pwdResetToast:(n)=>`Password di ${n} resettata`,
-    accountDeletedToast:(n)=>`Account di ${n} eliminato`,
+    accountDeletedToast:(n)=>`Account di ${n} eliminato definitivamente`,
+    usersLoadError:'Impossibile verificare gli utenti. Controlla la connessione e riprova.',
+    userDeleteError:'Eliminazione non confermata. Aggiorna l’elenco e riprova.',
+    accountUnavailable:'Questo account è stato eliminato e non è più disponibile.',
+    noActiveUsers:'Nessun utente disponibile',
     // Booking toasts
     selectDate:'Seleziona una data',
     enterTime:'Inserisci orario',
@@ -1962,11 +1981,15 @@ const LANG={
     accountActive:'Active account',
     noAccessYet:'No login yet',
     btnResetPwd:'Reset password',
-    btnDeleteAccount:'Delete account',
+    btnDeleteAccount:'Delete permanently',
     confirmResetPwd:(n)=>`Reset password for ${n}? They will set a new one on next login.`,
-    confirmDeleteUser:(n)=>`Delete account for ${n}? This will remove their saved password.`,
+    confirmDeleteUser:(n)=>`Permanently delete the account for ${n}? The profile, password and personal invitations will be removed. The name will no longer be available for login or new collaborations and cannot be registered again. Existing bookings and reports will be retained. Confirm?`,
     pwdResetToast:(n)=>`Password reset for ${n}`,
-    accountDeletedToast:(n)=>`Account deleted for ${n}`,
+    accountDeletedToast:(n)=>`Account permanently deleted for ${n}`,
+    usersLoadError:'Unable to verify users. Check your connection and try again.',
+    userDeleteError:'Deletion not confirmed. Refresh the list and try again.',
+    accountUnavailable:'This account has been deleted and is no longer available.',
+    noActiveUsers:'No users available',
     // Booking toasts
     selectDate:'Please select a date',
     enterTime:'Please enter a time',
@@ -2108,17 +2131,81 @@ async function sha256(str){
 }
 
 let userPasswords={};
-async function loadDynamicUsers(){
-  const users=await fbGet('users')||{};
+// A deletion marker keeps legacy names from being recreated by the static list.
+let dynamicUsers={};
+let deletedUsers={};
+function userKey(name){return name.trim().replace(/\s+/g,'_').toLowerCase();}
+function escapeUserText(value){
+  return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function getActiveUsers(){
+  const byKey=new Map();
+  [...ALL_USERS,...Object.values(dynamicUsers)].forEach(name=>{
+    if(typeof name!=='string'||!name.trim())return;
+    const key=userKey(name);
+    if(key!==userKey(ADMIN_USER)&&name!=='__nuovo__'&&!deletedUsers[key])byKey.set(key,name);
+  });
+  return [...byKey.values()].sort((a,b)=>a.localeCompare(b,currentLang));
+}
+async function readAccountData(path){
+  const response=await fetch(`${FB}/${path}.json`,{cache:'no-store'});
+  if(!response.ok)throw new Error('Account data unavailable');
+  const data=await response.json();
+  if(data!==null&&(typeof data!=='object'||Array.isArray(data)))throw new Error('Invalid account data');
+  return data||{};
+}
+function syncUserChoices(){
   const sel=document.getElementById('f-username');
-  const adminOpt=sel.querySelector('option[value="AMMINISTRATORE"]');
-  Object.values(users).forEach(fullName=>{
-    if(sel.querySelector(`option[value="${fullName}"]`))return;
+  const previous=sel.value;
+  Array.from(sel.options).forEach(opt=>{
+    if(opt.value&&opt.value!==ADMIN_USER&&opt.value!=='__nuovo__')opt.remove();
+  });
+  const adminOpt=Array.from(sel.options).find(opt=>opt.value===ADMIN_USER);
+  getActiveUsers().forEach(name=>{
     const opt=document.createElement('option');
-    opt.value=fullName;opt.textContent=fullName;
+    opt.value=name;opt.textContent=name;
     sel.insertBefore(opt,adminOpt);
   });
+  sel.value=Array.from(sel.options).some(opt=>opt.value===previous)?previous:'';
+  selectedCollaborators=selectedCollaborators.filter(name=>!deletedUsers[userKey(name)]);
+  resetCollabSelect(true);
 }
+async function loadDynamicUsers(){
+  const [users,deleted]=await Promise.all([readAccountData('users'),readAccountData('deleted_users')]);
+  dynamicUsers=users;deletedUsers=deleted;
+  syncUserChoices();
+  if(currentUser&&!isAdmin&&deletedUsers[userKey(currentUser)]){
+    document.getElementById('change-user-btn').click();
+    showError(T('accountUnavailable'));
+  }
+}
+async function ensureActiveAccount(){
+  if(!currentUser)return false;
+  try{await loadDynamicUsers();}
+  catch(e){showToast(T('usersLoadError'),'error');return false;}
+  return !!currentUser;
+}
+async function deleteUserAccount(name){
+  const key=userKey(name);
+  if(!isAdmin||key===userKey(ADMIN_USER)||!getActiveUsers().some(n=>userKey(n)===key)){
+    throw new Error('Account deletion unavailable');
+  }
+  // One atomic update: either every account change succeeds or none does.
+  const changes={
+    [`users/${key}`]:null,
+    [`passwords/${key}`]:null,
+    [`collab_notifs/${key}`]:null,
+    [`deleted_users/${key}`]:true
+  };
+  const response=await fetch(`${FB}/.json`,{
+    method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(changes)
+  });
+  if(!response.ok)throw new Error('Account deletion rejected');
+  delete dynamicUsers[key];delete userPasswords[key];deletedUsers[key]=true;
+  localStorage.removeItem(`seen_${name}`);
+  syncUserChoices();
+}
+
 
 
 async function loadPasswords(){
@@ -2187,6 +2274,9 @@ document.getElementById('f-username').addEventListener('change',async()=>{
 document.getElementById('user-save').addEventListener('click',async()=>{
   const name=document.getElementById('f-username').value.trim();
   if(!name){showError(T('errSelectName'));return;}
+  try{await loadDynamicUsers();userPasswords=await readAccountData('passwords');}
+  catch(e){showError(T('usersLoadError'));return;}
+  if(name!=='__nuovo__'&&deletedUsers[userKey(name)]){showError(T('accountUnavailable'));return;}
 
   // NUOVO UTENTE
   if(name==='__nuovo__'){
@@ -2200,12 +2290,15 @@ document.getElementById('user-save').addEventListener('click',async()=>{
     if(pwd!==confirm){showError(T('errPwdMismatch'));return;}
     const fullName=`${nome} ${cognome}`;
     const pwKey=fullName.replace(/\s+/g,'_').toLowerCase();
+    if(deletedUsers[pwKey]){showError(T('accountUnavailable'));return;}
+    if(pwKey===userKey(ADMIN_USER)||/[.#$\[\]\/]/.test(pwKey)){showError(T('errUserExists'));return;}
     if(userPasswords[pwKey]){showError(T('errUserExists'));return;}
     // Save user in Firebase: passwords + users list
     const hash=await sha256(pwd);
     await fbPatch('passwords',{[pwKey]:hash});
     await fbPatch('users',{[pwKey]:fullName});
     userPasswords[pwKey]=hash;
+    dynamicUsers[pwKey]=fullName;
     // Add to dropdown
     const sel=document.getElementById('f-username');
     const newOpt=document.createElement('option');
@@ -2557,37 +2650,27 @@ async function writeCollabNotifs(reqId, req){
 let selectedCollaborators=[];
 
 function buildCollabUsers(){
-  // All registered users except current user
-  const staticUsers=[
-    'Simone Amantia','Davide Campanella','Riccardo Puleo','Gaetano Pollara',
-    'Salvatore Russo','Gianluca Buffa','Giuseppe Ingarao','Kirill Kalashnikov',
-    'Sajjad Emami','Sangam Sangral','Maria Gloria Trapani','Manuela Caspio'
-  ];
-  // Also include any dynamic users loaded from Firebase
-  const sel=document.getElementById('f-username');
-  const dynamic=Array.from(sel.options)
-    .map(o=>o.value)
-    .filter(v=>v&&v!=='__nuovo__'&&v.toUpperCase()!=='AMMINISTRATORE'&&!staticUsers.includes(v));
-  return [...new Set([...staticUsers,...dynamic])].filter(n=>n!==currentUser).sort();
+  return getActiveUsers().filter(name=>userKey(name)!==userKey(currentUser||''));
 }
 
-function resetCollabSelect(){
-  selectedCollaborators=[];
+function resetCollabSelect(preserveSelection=false){
+  if(!preserveSelection)selectedCollaborators=[];
   const dropdown=document.getElementById('collab-dropdown');
   const chips=document.getElementById('collab-chips');
   const trigger=document.getElementById('collab-trigger');
   if(!dropdown||!chips||!trigger)return;
-  dropdown.classList.remove('open');
+  if(!preserveSelection)dropdown.classList.remove('open');
   chips.innerHTML='';
   trigger.textContent='Seleziona collaboratori...';
 
   const users=buildCollabUsers();
   dropdown.innerHTML=users.map(name=>`
-    <div class="collab-option" data-name="${name}">
-      <input type="checkbox" value="${name}">
-      <span>${name}</span>
+    <div class="collab-option${selectedCollaborators.includes(name)?' selected':''}" data-name="${escapeUserText(name)}">
+      <input type="checkbox" value="${escapeUserText(name)}" ${selectedCollaborators.includes(name)?'checked':''}>
+      <span>${escapeUserText(name)}</span>
     </div>`).join('');
 
+  renderCollabChips();
   dropdown.querySelectorAll('.collab-option').forEach(opt=>{
     opt.addEventListener('click',(e)=>{
       e.stopPropagation();
@@ -2620,8 +2703,8 @@ function renderCollabChips(){
   trigger.textContent=`${T('collabSelected')(selectedCollaborators.length)}`;
   chips.innerHTML=selectedCollaborators.map(name=>`
     <span class="collab-chip">
-      ${name}
-      <button class="collab-chip-x" data-name="${name}" onclick="removeCollab(this)">×</button>
+      ${escapeUserText(name)}
+      <button class="collab-chip-x" data-name="${escapeUserText(name)}" onclick="removeCollab(this)">×</button>
     </span>`).join('');
 }
 
@@ -2704,14 +2787,17 @@ loadPasswords().then(()=>loadDynamicUsers()).then(()=>{
   applyLang();
   const savedUser=localStorage.getItem('session_user');
   const savedAdmin=localStorage.getItem('session_admin')==='1';
-  if(savedUser){
+  if(savedUser&&(savedUser===ADMIN_USER||!deletedUsers[userKey(savedUser)])){
     setUser(savedUser,savedAdmin);
     // Non mostrare il modal — sessione ripristinata silenziosamente
   }else{
+    localStorage.removeItem('session_user');localStorage.removeItem('session_admin');
     showUserModal();
+    if(savedUser)showError(T('accountUnavailable'));
   }
-});
+}).catch(()=>{applyLang();showUserModal();showError(T('usersLoadError'));});
 setInterval(loadRequests,30000);
+setInterval(()=>{loadDynamicUsers().catch(()=>{});},30000);
 
 // ─── PWA SERVICE WORKER ───────────────────────────────────────────────────
 if('serviceWorker' in navigator){

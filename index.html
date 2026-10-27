@@ -372,6 +372,29 @@ html{background:var(--sidebar-bg)}body{font-family:'IBM Plex Sans',sans-serif;di
 .modal-close{position:absolute;top:14px;right:14px;background:none;border:none;font-size:28px;line-height:1;color:#9ca3af;cursor:pointer;padding:4px 10px;border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-weight:300;transition:all .15s;z-index:10}
 .modal-close:hover{background:#f0f3fa;color:var(--text-dark)}
 .modal{position:relative}
+
+/* Editable equipment guides and shared PDFs */
+.guide-toolbar,.guide-file-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.guide-toolbar{justify-content:space-between;margin-bottom:20px}
+.guide-toolbar .guide-back{margin-bottom:0}
+.guide-meta{font-size:12px;color:var(--text-gray);line-height:1.6;margin:10px 0 16px}
+.guide-text{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.6;color:var(--text-dark)}
+.guide-warn .guide-text{color:inherit;font-size:12px}
+.guide-dpi-list{padding-left:20px}.guide-dpi-list li{padding:4px 0}
+.guide-editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+#guide-editor textarea{min-height:95px;resize:vertical;line-height:1.6}
+#guide-editor h3{color:var(--text-dark)}
+.guide-file-row{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 0;border-top:1px solid #e2e7f0}
+.guide-file-info{min-width:0;flex:1 1 180px;overflow-wrap:anywhere;font-size:13px;color:var(--text-dark)}
+.guide-file-info span{display:block;color:var(--text-gray);font-size:12px;margin-top:5px}
+.guide-upload{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:18px;padding-top:16px;border-top:1px solid #e2e7f0}
+.guide-upload label{flex-basis:100%;font-weight:600;font-size:13px;color:var(--text-dark)}
+.guide-upload input{max-width:100%;min-width:0;font-size:13px;color:var(--text-dark)}
+.guide-status{font-size:13px;margin-top:12px;line-height:1.6;color:var(--text-gray)}
+.guide-status-error{color:#a52b2b}.guide-load-error{background:#fff5e6;color:#7b4b09;border:1px solid #f0c785;padding:14px;border-radius:8px;margin-bottom:18px;font-size:13px;line-height:1.6}
+#attrezzature-detail button:disabled{opacity:.55;cursor:wait}
+@media(max-width:600px){.guide-editor-grid{grid-template-columns:1fr}.guide-title{font-size:18px;overflow-wrap:anywhere}.guide-section{padding:16px}.guide-header{gap:12px}.guide-upload input{width:100%}}
+
 </style>
 </head>
 <body>
@@ -2116,6 +2139,7 @@ function applyLang(){
   if(currentSection==='statistiche')renderStats();
   if(currentSection==='segnalazioni')renderIssues();
   if(currentSection==='utenti')renderUsers();
+  if(currentSection==='attrezzature'&&!guideDraft){if(guideViewId)renderMachineDetail(guideViewId);else renderMachineCards();}
 }
 
 function toggleLang(){
@@ -2370,10 +2394,12 @@ function setUser(name,admin){
   loadBookings();
   loadRequests();
   if(admin)loadIssues();
+  if(currentSection==='attrezzature')renderMachineCards();
 }
 
 document.getElementById('change-user-btn').addEventListener('click',()=>{
   currentUser=null;isAdmin=false;
+  resetGuideSession();
   localStorage.removeItem('session_user');
   localStorage.removeItem('session_admin');
   document.getElementById('user-avatar').textContent='?';
@@ -2563,63 +2589,238 @@ const MACHINE_CREDENTIALS={
 };
 
 
+// Editable equipment guides. Text and attachment metadata are separate from PDF data.
+const GUIDE_PDF_LIMIT=5*1024*1024;
+let guideViewId=null, guideViewToken=0, guideSnapshot=null, guideDraft=null, guideBusy=false;
+const GUIDE_LABELS={
+ it:{back:'← Torna alle macchine',edit:'Modifica guida',save:'Salva modifiche',cancel:'Annulla',saving:'Salvataggio…',loading:'Caricamento guida…',loadError:'Non è stato possibile caricare la guida condivisa. Sono mostrate le istruzioni originali; riprova per visualizzare modifiche e allegati.',retry:'Riprova',saved:'Guida aggiornata per tutti gli utenti',failure:'Operazione non confermata. Controlla la connessione e i permessi del portale, poi riprova.',conflict:'La guida è stata modificata da un’altra sessione. Il testo inserito è ancora qui: copialo, annulla e riapri la modifica per caricare la versione più recente.',discard:'Abbandonare le modifiche non salvate alla guida?',wait:'Attendi il completamento dell’operazione.',name:'Titolo della guida',nameEn:'Titolo in inglese (facoltativo)',subtitle:'Modello / sottotitolo',group:'Laboratorio / gruppo',warning:'Avvertenze',dpi:'DPI richiesti — uno per riga',steps:'Procedura operativa — un passaggio per riga',notes:'Note operative',editorTitle:'Modifica le linee guida',editorHelp:'I contenuti salvati saranno visibili a tutto il gruppo. Per DPI e procedura, inserisci una voce per riga.',attachments:'Documenti PDF',emptyFiles:'Nessun PDF allegato a questa attrezzatura.',upload:'Carica PDF',pdfHelp:'Un file alla volta, massimo 5 MB per PDF. Gli allegati sono consultabili da tutti gli utenti del portale.',download:'Scarica PDF',remove:'Rimuovi',removeAsk:'Rimuovere definitivamente questo PDF dalla guida?',uploading:'Caricamento PDF…',uploaded:'PDF caricato',removed:'PDF rimosso',invalidPdf:'Seleziona un file PDF valido, non vuoto e di dimensione massima 5 MB.',titleRequired:'Inserisci il titolo della guida.',changed:'Ultimo aggiornamento',original:'Guida originale',missingFile:'PDF non disponibile. Riapri la guida per aggiornare gli allegati.',tooLong:'Il testo supera i limiti consentiti. Riduci la lunghezza dei campi.',noText:'Nessuna indicazione inserita.',downloadError:'Impossibile scaricare il PDF. Riprova.',pdfCount:'PDF allegati'},
+ en:{back:'← Back to equipment',edit:'Edit guide',save:'Save changes',cancel:'Cancel',saving:'Saving…',loading:'Loading guide…',loadError:'The shared guide could not be loaded. Original instructions are shown; retry to view changes and attachments.',retry:'Retry',saved:'Guide updated for all users',failure:'Operation not confirmed. Check your connection and portal permissions, then retry.',conflict:'Another session changed this guide. Your text is still here: copy it, cancel and reopen the editor to load the latest version.',discard:'Discard unsaved guide changes?',wait:'Wait for the operation to finish.',name:'Guide title',nameEn:'English title (optional)',subtitle:'Model / subtitle',group:'Laboratory / group',warning:'Warnings',dpi:'Required PPE — one item per line',steps:'Operating procedure — one step per line',notes:'Operating notes',editorTitle:'Edit equipment guidelines',editorHelp:'Saved content will be visible to the entire group. Enter one item per line for PPE and procedure steps.',attachments:'PDF documents',emptyFiles:'No PDF attached to this equipment.',upload:'Upload PDF',pdfHelp:'One file at a time, up to 5 MB per PDF. Attachments are available to all portal users.',download:'Download PDF',remove:'Remove',removeAsk:'Permanently remove this PDF from the guide?',uploading:'Uploading PDF…',uploaded:'PDF uploaded',removed:'PDF removed',invalidPdf:'Choose a valid, non-empty PDF file, no larger than 5 MB.',titleRequired:'Enter the guide title.',changed:'Last updated',original:'Original guide',missingFile:'PDF unavailable. Reopen the guide to refresh attachments.',tooLong:'Text exceeds the allowed limits. Shorten the fields.',noText:'No instructions entered.',downloadError:'Unable to download the PDF. Try again.',pdfCount:'Attached PDFs'}
+};
+function GL(key){return (GUIDE_LABELS[currentLang]||GUIDE_LABELS.it)[key]||key;}
+function guideMachineValid(id){return MACHINES.some(m=>m.id===id);}
+function guideFileValid(id){return /^[a-zA-Z0-9_-]{1,100}$/.test(id);}
+function guideText(value){return escapeUserText(value==null?'':value);}
+function guideFileSize(size){return Number.isFinite(size)?(size<1024*1024?Math.max(1,Math.round(size/1024))+' KB':(size/1024/1024).toFixed(2)+' MB'):'';}
+function guideError(message){const e=new Error(message);e.guideMessage=true;return e;}
+async function guideRequest(path,options={}){
+ const controller=new AbortController();
+ const timer=setTimeout(()=>controller.abort(),60000);
+ try{
+  const r=await fetch(`${FB}/${path}.json`,{cache:'no-store',...options,signal:controller.signal});
+  if(r.status===412)throw guideError(GL('conflict'));
+  if(!r.ok)throw guideError(GL('failure'));
+  return r;
+ }finally{clearTimeout(timer);}
+}
+function normalizeGuide(raw,id){
+ const base=MACHINE_GUIDES[id];
+ const source=raw&&typeof raw==='object'?raw:{};
+ const result={};
+ for(const key of ['name','nameEn','subtitle','group','warning','notes'])result[key]=typeof source[key]==='string'?source[key]:(base[key]||'');
+ for(const key of ['dpi','steps'])result[key]=Object.hasOwn(source,key)?(Array.isArray(source[key])?source[key].filter(x=>typeof x==='string'):[]):[...base[key]];
+ result.updatedAt=typeof source.updatedAt==='number'?source.updatedAt:null;
+ return result;
+}
+async function fetchGuide(id){
+ if(!guideMachineValid(id))throw new Error('Unknown equipment');
+ const [contentResponse,filesResponse]=await Promise.all([
+  guideRequest(`machine_guides/${id}/content`,{headers:{'X-Firebase-ETag':'true'}}),
+  guideRequest(`machine_guides/${id}/files`)
+ ]);
+ const [raw,files]=await Promise.all([contentResponse.json(),filesResponse.json()]);
+ return {guide:normalizeGuide(raw,id),etag:contentResponse.headers.get('ETag'),files:files&&typeof files==='object'?files:{}};
+}
+function leaveGuide(){
+ if(guideBusy){showToast(GL('wait'));return false;}
+ if(guideDraft&&guideDraft.dirty&&!confirm(GL('discard')))return false;
+ guideDraft=null;guideViewToken++;return true;
+}
+function resetGuideSession(){
+ guideDraft=null;guideViewId=null;guideSnapshot=null;guideViewToken++;
+ document.getElementById('attrezzature-detail').innerHTML='';
+ document.getElementById('attrezzature-detail').classList.remove('active');
+ document.getElementById('attrezzature-grid').style.display='block';
+}
 function renderMachineCards(){
-  const grid=document.getElementById('machine-cards-grid');
-  const detail=document.getElementById('attrezzature-detail');
-  document.getElementById('attrezzature-grid').style.display='block';
-  detail.classList.remove('active');
-  detail.innerHTML='';
-  grid.innerHTML='';
-  MACHINE_GROUPS.forEach(group=>{
-    group.machines.forEach(m=>{
-      const card=document.createElement('div');
-      card.className='machine-card';
-      card.innerHTML=`
-        <div class="machine-card-img">${svgForMachine(m.id)}</div>
-        <div class="machine-card-body">
-          <div class="machine-card-group">${machineGroupLabel(group)}</div>
-          <div class="machine-card-name">${machineName(m)}</div>
-          ${(()=>{const g=MACHINE_GUIDES[m.id];return g&&g.subtitle?`<div style="font-size:11px;color:var(--text-gray);margin-top:2px;font-family:'IBM Plex Mono',monospace">${g.subtitle}</div>`:''})()}
-          <div class="machine-card-arrow">Apri guida →</div>
-        </div>`;
-      card.addEventListener('click',()=>renderMachineDetail(m.id));
-      grid.appendChild(card);
-    });
-  });
+ if(!leaveGuide())return;
+ guideViewId=null;guideSnapshot=null;
+ const grid=document.getElementById('machine-cards-grid');
+ const detail=document.getElementById('attrezzature-detail');
+ document.getElementById('attrezzature-grid').style.display='block';
+ detail.classList.remove('active');detail.innerHTML='';grid.innerHTML='';
+ MACHINE_GROUPS.forEach(group=>group.machines.forEach(m=>{
+  const card=document.createElement('div');card.className='machine-card';
+  card.innerHTML=`<div class="machine-card-img">${svgForMachine(m.id)}</div><div class="machine-card-body"><div class="machine-card-group">${guideText(machineGroupLabel(group))}</div><div class="machine-card-name">${guideText(machineName(m))}</div><div class="guide-group">${guideText(MACHINE_GUIDES[m.id].subtitle)}</div><div class="machine-card-arrow">${currentLang==='en'?'Open guide':'Apri guida'} →</div></div>`;
+  card.tabIndex=0;card.setAttribute('role','button');
+  card.addEventListener('click',()=>renderMachineDetail(m.id));
+  card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();renderMachineDetail(m.id);}});
+  grid.appendChild(card);
+ }));
 }
+async function renderMachineDetail(id){
+ if(!guideMachineValid(id)||!leaveGuide())return;
+ guideViewId=id;guideSnapshot=null;
+ const token=++guideViewToken;
+ document.getElementById('attrezzature-grid').style.display='none';
+ const detail=document.getElementById('attrezzature-detail');detail.classList.add('active');
+ detail.innerHTML=`<button class="guide-back" id="guide-back">${GL('back')}</button><p role="status">${GL('loading')}</p>`;
+ document.getElementById('guide-back').onclick=renderMachineCards;
+ try{
+  const snapshot=await fetchGuide(id);
+  if(token!==guideViewToken||guideViewId!==id)return;
+  guideSnapshot=snapshot;paintGuideDetail(id,snapshot,false);
+ }catch(e){
+  if(token!==guideViewToken||guideViewId!==id)return;
+  paintGuideDetail(id,{guide:normalizeGuide(null,id),files:{}},true);
+ }
+}
+function paintGuideDetail(id,snapshot,failed){
+ const g=snapshot.guide;
+ const files=Object.entries(snapshot.files).filter(([fid,f])=>guideFileValid(fid)&&f&&typeof f.name==='string');
+ const date=g.updatedAt?new Date(g.updatedAt).toLocaleString(currentLang==='en'?'en-GB':'it-IT'):'';
+ const textBlock=value=>guideText(value)||guideText(GL('noText'));
+ const detail=document.getElementById('attrezzature-detail');
+ detail.innerHTML=`
+ <div class="guide-toolbar"><button class="guide-back" id="guide-back">${GL('back')}</button>${isAdmin&&!failed?`<button class="btn btn-primary" id="guide-edit">${GL('edit')}</button>`:''}</div>
+ ${failed?`<div class="guide-load-error" role="alert">${GL('loadError')} <button class="btn btn-ghost" id="guide-retry">${GL('retry')}</button></div>`:''}
+ <div class="guide-header"><div class="guide-header-icon">${svgForMachine(id)}</div><div><div class="guide-title">${guideText(currentLang==='en'&&g.nameEn?g.nameEn:g.name)}</div><div class="guide-group">${guideText(g.subtitle)}</div><div class="guide-group">${guideText(g.group)}</div></div></div>
+ <p class="guide-meta">${date?`${GL('changed')}: ${guideText(date)}`:GL('original')}</p>
+ <div class="guide-warn"><span>⚠️</span><span class="guide-text">${textBlock(g.warning)}</span></div>
+ <div class="guide-section"><div class="guide-section-title">🦺 ${T('dpiRequired')}</div><ul class="guide-dpi-list">${g.dpi.length?g.dpi.map(x=>`<li class="guide-text">${guideText(x)}</li>`).join(''):`<li>${GL('noText')}</li>`}</ul></div>
+ <div class="guide-section"><div class="guide-section-title">📋 ${T('operativeProcedure')}</div><ol class="guide-step-list">${g.steps.length?g.steps.map((x,i)=>`<li><div class="guide-step-num">${i+1}</div><span class="guide-text">${guideText(x)}</span></li>`).join(''):`<li>${GL('noText')}</li>`}</ol></div>
+ <div class="guide-section"><div class="guide-section-title">📝 ${T('operativeNotes')}</div><p class="guide-text">${textBlock(g.notes)}</p></div>
+ <div class="guide-section"><div class="guide-section-title">📄 ${GL('attachments')}</div>
+ <p class="guide-meta">${GL('pdfHelp')}</p>
+ <div id="guide-file-list">${files.length?files.map(([fid,f])=>`<div class="guide-file-row"><div class="guide-file-info"><strong>${guideText(f.name)}</strong><span>${guideFileSize(f.size)}</span></div><div class="guide-file-actions"><button class="btn btn-ghost" data-guide-download="${fid}">${GL('download')}</button>${isAdmin&&!failed?`<button class="btn btn-reject" data-guide-remove="${fid}">${GL('remove')}</button>`:''}</div></div>`).join(''):`<p class="guide-meta">${failed?'—':GL('emptyFiles')}</p>`}</div>
+ ${isAdmin&&!failed?`<div class="guide-upload"><label for="guide-pdf-input">${GL('upload')}</label><input type="file" id="guide-pdf-input" accept=".pdf,application/pdf"><button class="btn btn-primary" id="guide-upload-btn">${GL('upload')}</button></div>`:''}
+ <p id="guide-file-status" class="guide-status" role="status" aria-live="polite"></p></div>`;
+ document.getElementById('guide-back').onclick=renderMachineCards;
+ if(failed){document.getElementById('guide-retry').onclick=()=>renderMachineDetail(id);return;}
+ if(isAdmin){
+  document.getElementById('guide-edit').onclick=()=>editGuide(id);
+  document.getElementById('guide-upload-btn').onclick=()=>uploadGuidePdf(id);
+ }
+ detail.querySelectorAll('[data-guide-download]').forEach(btn=>btn.onclick=()=>downloadGuidePdf(id,btn.dataset.guideDownload,btn));
+ detail.querySelectorAll('[data-guide-remove]').forEach(btn=>btn.onclick=()=>removeGuidePdf(id,btn.dataset.guideRemove));
+}
+function editGuide(id){
+ if(!isAdmin||guideBusy||guideViewId!==id||!guideSnapshot)return;
+ if(!guideSnapshot.etag){showToast(GL('failure'),'error');return;}
+ guideDraft={id,etag:guideSnapshot.etag,dirty:false};
+ const g=guideSnapshot.guide;
+ const field=(key,multiline,max)=>`<div class="field"><label for="guide-field-${key}">${GL(key)}</label>${multiline?`<textarea id="guide-field-${key}" rows="${key==='steps'?10:4}" maxlength="${max}">${guideText(Array.isArray(g[key])?g[key].join('\n'):g[key])}</textarea>`:`<input id="guide-field-${key}" value="${guideText(g[key])}" maxlength="${max}" ${key==='name'?'required':''}>`}</div>`;
+ const detail=document.getElementById('attrezzature-detail');
+ detail.innerHTML=`<form id="guide-editor" class="guide-section"><h3>${GL('editorTitle')}</h3><p class="guide-meta">${GL('editorHelp')}</p><div class="guide-editor-grid">${field('name',false,200)}${field('nameEn',false,200)}${field('subtitle',false,200)}${field('group',false,200)}</div>${field('warning',true,6000)}${field('dpi',true,12000)}${field('steps',true,30000)}${field('notes',true,12000)}<p id="guide-edit-status" class="guide-status" role="status" aria-live="polite"></p><div class="guide-file-actions"><button type="button" class="btn btn-ghost" id="guide-cancel">${GL('cancel')}</button><button type="submit" class="btn btn-primary" id="guide-save">${GL('save')}</button></div></form>`;
+ document.getElementById('guide-editor').addEventListener('input',()=>{if(guideDraft)guideDraft.dirty=true;});
+ document.getElementById('guide-editor').onsubmit=e=>{e.preventDefault();saveGuide(id);};
+ document.getElementById('guide-cancel').onclick=()=>renderMachineDetail(id);
+ document.getElementById('guide-field-name').focus();
+}
+function guideSetBusy(busy){
+ guideBusy=busy;
+ document.querySelectorAll('#attrezzature-detail button, #attrezzature-detail input, #attrezzature-detail textarea').forEach(el=>el.disabled=busy);
+}
+function guideStatus(id,text,error=false){
+ const el=document.getElementById(id);
+ if(el){el.textContent=text;el.classList.toggle('guide-status-error',error);}
+}
+function readGuideForm(){
+ const values={};
+ const limits={name:200,nameEn:200,subtitle:200,group:200,warning:6000,dpi:12000,steps:30000,notes:12000};
+ for(const [key,limit] of Object.entries(limits)){
+  const text=document.getElementById(`guide-field-${key}`).value.trim();
+  if(text.length>limit)throw guideError(GL('tooLong'));
+  values[key]=key==='dpi'||key==='steps'?text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean):text;
+ }
+ if(!values.name)throw guideError(GL('titleRequired'));
+ return values;
+}
+async function saveGuide(id){
+ if(!isAdmin||guideBusy||!guideDraft||guideDraft.id!==id)return;
+ const draft=guideDraft;const token=guideViewToken;
+ let values;
+ try{values=readGuideForm();}catch(e){guideStatus('guide-edit-status',e.message,true);return;}
+ guideSetBusy(true);guideStatus('guide-edit-status',GL('saving'));
+ try{
+  if(!isAdmin)throw guideError(GL('failure'));
+  await guideRequest(`machine_guides/${id}/content`,{method:'PUT',headers:{'Content-Type':'application/json','if-match':draft.etag},body:JSON.stringify({...values,updatedAt:{'.sv':'timestamp'}})});
+  if(guideDraft===draft)guideDraft=null;
+  showToast(GL('saved'),'success');
+  guideSetBusy(false);
+  if(token===guideViewToken&&guideViewId===id)await renderMachineDetail(id);
+ }catch(e){guideStatus('guide-edit-status',e.guideMessage?e.message:GL('failure'),true);}
+ finally{guideSetBusy(false);}
+}
+async function encodeGuidePdf(file){
+ if(!file||!file.name.toLowerCase().endsWith('.pdf')||file.size===0||file.size>GUIDE_PDF_LIMIT)throw guideError(GL('invalidPdf'));
+ const header=new Uint8Array(await file.slice(0,5).arrayBuffer());
+ if(String.fromCharCode(...header)!=='%PDF-')throw guideError(GL('invalidPdf'));
+ return new Promise((resolve,reject)=>{
+  const reader=new FileReader();
+  reader.onerror=()=>reject(guideError(GL('invalidPdf')));
+  reader.onload=()=>resolve(String(reader.result).split(',')[1]);
+  reader.readAsDataURL(file);
+ });
+}
+async function uploadGuidePdf(id){
+ if(!isAdmin||guideBusy||guideViewId!==id||!guideMachineValid(id))return;
+ const file=document.getElementById('guide-pdf-input').files[0];
+ const token=guideViewToken;
+ guideSetBusy(true);guideStatus('guide-file-status',GL('uploading'));
+ try{
+  const data=await encodeGuidePdf(file);
+  if(!isAdmin||guideViewId!==id||token!==guideViewToken)throw guideError(GL('failure'));
+  const fid='pdf_'+crypto.randomUUID().replace(/-/g,'');
+  const name=file.name.replace(/[\\/\u0000-\u001f\u007f]/g,'_').slice(0,180);
+  const changes={
+   [`machine_guides/${id}/files/${fid}`]:{name,size:file.size,uploadedAt:{'.sv':'timestamp'}},
+   [`guide_files/${id}/${fid}`]:{data,size:file.size,type:'application/pdf'}
+  };
+  await guideRequest('',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(changes)});
+  showToast(GL('uploaded'),'success');guideSetBusy(false);
+  if(token===guideViewToken&&guideViewId===id)await renderMachineDetail(id);
+ }catch(e){guideStatus('guide-file-status',e.guideMessage?e.message:GL('failure'),true);}
+ finally{guideSetBusy(false);}
+}
+async function removeGuidePdf(id,fid){
+ if(!isAdmin||guideBusy||!guideMachineValid(id)||!guideFileValid(fid)||guideViewId!==id)return;
+ if(!confirm(GL('removeAsk')))return;
+ const token=guideViewToken;guideSetBusy(true);guideStatus('guide-file-status',GL('saving'));
+ try{
+  await guideRequest('',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({[`machine_guides/${id}/files/${fid}`]:null,[`guide_files/${id}/${fid}`]:null})});
+  showToast(GL('removed'),'success');guideSetBusy(false);
+  if(token===guideViewToken&&guideViewId===id)await renderMachineDetail(id);
+ }catch(e){guideStatus('guide-file-status',e.guideMessage?e.message:GL('failure'),true);}
+ finally{guideSetBusy(false);}
+}
+async function downloadGuidePdf(id,fid,btn){
+ if(guideBusy||!currentUser||!guideMachineValid(id)||!guideFileValid(fid))return;
+ const meta=guideSnapshot&&guideSnapshot.files[fid];
+ if(!meta)return;
+ btn.disabled=true;
+ try{
+  const response=await guideRequest(`guide_files/${id}/${fid}`);
+  const record=await response.json();
+  if(!record||typeof record.data!=='string'||record.data.length>Math.ceil(GUIDE_PDF_LIMIT/3)*4)throw guideError(GL('missingFile'));
+  const binary=atob(record.data);
+  if(!binary.startsWith('%PDF-')||binary.length>GUIDE_PDF_LIMIT||binary.length!==meta.size)throw guideError(GL('missingFile'));
+  const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
+  const url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));
+  const a=document.createElement('a');a.href=url;a.download=meta.name.replace(/[\\/\u0000-\u001f\u007f]/g,'_');
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+ }catch(e){guideStatus('guide-file-status',e.guideMessage?e.message:GL('downloadError'),true);}
+ finally{btn.disabled=false;}
+}
+// Prevent accidental loss of edits through the existing desktop/mobile navigation.
+document.addEventListener('click',e=>{
+ const nav=e.target.closest('.nav-item[data-section],.mobile-nav-item,#change-user-btn,#lang-toggle');
+ if(!nav||(!guideDraft&&!guideBusy))return;
+ if(nav.id==='lang-toggle'&&guideDraft){e.preventDefault();e.stopImmediatePropagation();showToast(GL('wait'));return;}
+ if(!leaveGuide()){e.preventDefault();e.stopImmediatePropagation();}
+},true);
+window.addEventListener('beforeunload',e=>{if(guideBusy||(guideDraft&&guideDraft.dirty)){e.preventDefault();e.returnValue='';}});
 
-function renderMachineDetail(machineId){
-  const guide=MACHINE_GUIDES[machineId];
-  if(!guide)return;
-  document.getElementById('attrezzature-grid').style.display='none';
-  const detail=document.getElementById('attrezzature-detail');
-  detail.classList.add('active');
-  const dpiItems=guide.dpi.map(d=>`<li class="guide-step-list" style="display:list-item;list-style:disc;margin-left:18px;font-size:13px;color:var(--text-dark);padding:4px 0">${d}</li>`).join('');
-  const steps=guide.steps.map((s,i)=>`<li><div class="guide-step-num">${i+1}</div><span>${s}</span></li>`).join('');
-  detail.innerHTML=`
-    <button class="guide-back" onclick="renderMachineCards()">← Torna alle macchine</button>
-    <div class="guide-header">
-      <div class="guide-header-icon">${svgForMachine(machineId)}</div>
-      <div>
-        <div class="guide-title">${machineName({name:guide.name,nameEn:guide.nameEn||guide.name})}</div>
-        ${guide.subtitle?`<div style="font-size:12px;color:var(--text-gray);font-family:'IBM Plex Mono',monospace;margin-top:2px">${guide.subtitle}</div>`:''}
-        <div class="guide-group">${guide.group}</div>
-      </div>
-    </div>
-    <div class="guide-warn"><span style="font-size:18px;flex-shrink:0">⚠️</span><span>${guide.warning}</span></div>
-    <div class="guide-section">
-      <div class="guide-section-title"><span>🦺</span>${T('dpiRequired')}</div>
-      <ul style="list-style:disc;padding-left:18px">${guide.dpi.map(d=>`<li style="font-size:13px;color:var(--text-dark);padding:4px 0">${d}</li>`).join('')}</ul>
-    </div>
-    <div class="guide-section">
-      <div class="guide-section-title"><span>📋</span>${T('operativeProcedure')}</div>
-      <ul class="guide-step-list">${steps}</ul>
-    </div>
-    <div class="guide-section">
-      <div class="guide-section-title"><span>📝</span>${T('operativeNotes')}</div>
-      <p style="font-size:13px;color:var(--text-dark);line-height:1.6">${guide.notes}</p>
-    </div>`;
-}
 
 // ─── COLLABORATORI ─────────────────────────────────────────────────────────
 
